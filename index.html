@@ -113,6 +113,31 @@
   .status-dot.ready{background:var(--green)}
   .status-dot.loading{background:var(--warn);animation:pulse 1s ease-in-out infinite}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+  /* ── Playlist manager ── */
+  .pl-section{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px}
+  .pl-title{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+  .pl-save-row{display:flex;gap:6px;margin-bottom:10px}
+  .pl-save-row input{flex:1;font-size:11px;padding:6px 10px}
+  .pl-save-btn{background:var(--green);color:#000;border:none;border-radius:5px;padding:6px 12px;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0}
+  .pl-save-btn:hover{background:#1ed760}
+  .pl-save-btn:disabled{opacity:.4;cursor:not-allowed}
+  .pl-list{display:flex;flex-direction:column;gap:5px;max-height:180px;overflow-y:auto}
+  .pl-list::-webkit-scrollbar{width:2px}
+  .pl-list::-webkit-scrollbar-thumb{background:var(--border)}
+  .pl-item{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:7px 10px;transition:border-color .15s}
+  .pl-item:hover{border-color:var(--green)}
+  .pl-item-info{flex:1;min-width:0}
+  .pl-item-name{font-size:11px;font-family:'DM Mono',monospace;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pl-item-meta{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);margin-top:1px}
+  .pl-item-btns{display:flex;gap:4px;flex-shrink:0}
+  .pl-btn{padding:3px 8px;border-radius:3px;font-size:10px;font-family:'DM Mono',monospace;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+  .pl-btn-load{background:var(--green-dim);color:var(--green);border:1px solid var(--green-dim)}
+  .pl-btn-load:hover{background:var(--green);color:#000}
+  .pl-btn-del{background:transparent;color:var(--danger);border:1px solid transparent}
+  .pl-btn-del:hover{border-color:var(--danger)}
+  .pl-empty{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);text-align:center;padding:12px 0}
+  .pl-toast{font-size:10px;font-family:'DM Mono',monospace;color:var(--green);margin-top:6px;min-height:14px;text-align:center}
 </style>
 </head>
 <body>
@@ -194,6 +219,22 @@
       </div>
       <div class="queue" id="queueEl">
         <div class="empty-q">no tracks yet<br>paste a spotify track url above</div>
+      </div>
+
+      <!-- Playlist Manager -->
+      <div class="pl-section" style="margin-top:1.25rem">
+        <div class="pl-title">
+          <span>Saved Playlists</span>
+          <span class="badge-count" id="plCount">0 saved</span>
+        </div>
+        <div class="pl-save-row">
+          <input type="text" id="plNameInput" placeholder="playlist name…" />
+          <button class="pl-save-btn" onclick="savePlaylist()" id="plSaveBtn">save queue</button>
+        </div>
+        <div class="pl-toast" id="plToast"></div>
+        <div class="pl-list" id="plList">
+          <div class="pl-empty">no saved playlists yet</div>
+        </div>
       </div>
     </div>
 
@@ -558,8 +599,103 @@ function updateControls() {
 }
 
 /* ─────────────────────────────────────────
-   UI helpers
+   Playlist persistence (localStorage)
 ───────────────────────────────────────── */
+function getPlaylists() {
+  try { return JSON.parse(localStorage.getItem('cue_playlists') || '[]'); }
+  catch { return []; }
+}
+
+function savePlaylists(pls) {
+  localStorage.setItem('cue_playlists', JSON.stringify(pls));
+}
+
+function savePlaylist() {
+  const name = document.getElementById('plNameInput').value.trim();
+  if (!name) { showToast('enter a playlist name first', true); return; }
+  if (!queue.length) { showToast('queue is empty — add tracks first', true); return; }
+
+  const pls = getPlaylists();
+  const existing = pls.findIndex(p => p.name.toLowerCase() === name.toLowerCase());
+  const entry = { name, tracks: JSON.parse(JSON.stringify(queue)), savedAt: Date.now() };
+
+  if (existing >= 0) {
+    pls[existing] = entry; // overwrite
+    showToast(`"${name}" updated ✓`);
+  } else {
+    pls.unshift(entry);
+    showToast(`"${name}" saved ✓`);
+  }
+
+  savePlaylists(pls);
+  document.getElementById('plNameInput').value = '';
+  renderPlaylists();
+}
+
+function loadPlaylist(idx) {
+  const pls = getPlaylists();
+  const pl = pls[idx];
+  if (!pl) return;
+  queue = JSON.parse(JSON.stringify(pl.tracks));
+  currentIdx = queue.length > 0 ? 0 : -1;
+  renderQueue();
+  updateControls();
+  showToast(`"${pl.name}" loaded ✓`);
+}
+
+function deletePlaylist(idx) {
+  const pls = getPlaylists();
+  const name = pls[idx]?.name;
+  pls.splice(idx, 1);
+  savePlaylists(pls);
+  renderPlaylists();
+  showToast(`"${name}" deleted`);
+}
+
+function renderPlaylists() {
+  const pls = getPlaylists();
+  const el = document.getElementById('plList');
+  document.getElementById('plCount').textContent = `${pls.length} saved`;
+
+  if (!pls.length) {
+    el.innerHTML = '<div class="pl-empty">no saved playlists yet</div>';
+    return;
+  }
+
+  el.innerHTML = pls.map((p, i) => `
+    <div class="pl-item">
+      <div class="pl-item-info">
+        <div class="pl-item-name">${p.name}</div>
+        <div class="pl-item-meta">${p.tracks.length} track${p.tracks.length !== 1 ? 's' : ''} · saved ${timeAgo(p.savedAt)}</div>
+      </div>
+      <div class="pl-item-btns">
+        <button class="pl-btn pl-btn-load" onclick="loadPlaylist(${i})">load</button>
+        <button class="pl-btn pl-btn-del" onclick="deletePlaylist(${i})">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+function timeAgo(ts) {
+  const diff = Date.now() - ts;
+  const mins = Math.floor(diff / 60000);
+  const hrs = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${days}d ago`;
+}
+
+let toastTimer = null;
+function showToast(msg, isErr = false) {
+  const el = document.getElementById('plToast');
+  el.textContent = msg;
+  el.style.color = isErr ? 'var(--danger)' : 'var(--green)';
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.textContent = ''; }, 2500);
+}
+
+
 function show(id) {
   ['splashScreen','loadingScreen','appScreen'].forEach(s => {
     document.getElementById(s).classList.toggle('active', s === id);
@@ -626,6 +762,7 @@ async function boot() {
   document.getElementById('loadingText').textContent = 'initializing playback…';
   show('appScreen');
   renderQueue();
+  renderPlaylists();
   updateControls();
   await initPlayer();
 }

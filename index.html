@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Spotify Cue Player</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{--bg:#0a0a0a;--surface:#141414;--card:#1c1c1c;--border:#2a2a2a;--green:#1db954;--green-dim:#145c2e;--text:#f5f5f5;--muted:#666;--danger:#e24b4a;--warn:#f59e0b;--warn-bg:#1a1500;--warn-border:#3a3010}
+  html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Syne',sans-serif}
+
+  .screen{display:none}
+  .screen.active{display:flex;flex-direction:column;min-height:100vh}
+
+  /* ── Splash ── */
+  .splash-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:2rem}
+  .splash{display:flex;flex-direction:column;align-items:center;text-align:center;max-width:400px;width:100%}
+  .logo-ring{width:72px;height:72px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:1.5rem}
+  .logo-ring svg{width:36px;height:36px;fill:#000}
+  .splash h1{font-size:30px;font-weight:700;letter-spacing:-0.03em;margin-bottom:10px}
+  .splash-sub{color:var(--muted);font-size:12px;font-family:'DM Mono',monospace;line-height:1.8;max-width:280px;margin-bottom:2rem}
+  .features{display:flex;flex-direction:column;gap:10px;margin-bottom:2.5rem;text-align:left;width:100%;max-width:280px}
+  .feat{display:flex;align-items:center;gap:10px;font-size:12px;font-family:'DM Mono',monospace;color:var(--muted)}
+  .dot{width:6px;height:6px;background:var(--green);border-radius:50%;flex-shrink:0}
+  .btn-spotify{display:flex;align-items:center;justify-content:center;gap:10px;background:var(--green);color:#000;border:none;border-radius:500px;padding:15px 36px;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.15s;width:100%;max-width:300px}
+  .btn-spotify:hover{background:#1ed760;transform:scale(1.02)}
+  .btn-spotify svg{width:20px;height:20px;fill:#000}
+  .splash-note{margin-top:14px;font-size:10px;font-family:'DM Mono',monospace;color:#444;line-height:1.7;max-width:300px}
+
+  /* ── Loading ── */
+  .loading-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+  .spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin 0.8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .loading-text{font-size:12px;font-family:'DM Mono',monospace;color:var(--muted)}
+
+  /* ── App ── */
+  .user-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:8px 1.5rem;display:flex;align-items:center;gap:10px;flex-shrink:0}
+  .avatar{width:28px;height:28px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#000;flex-shrink:0}
+  .uname{font-size:12px;font-family:'DM Mono',monospace;flex:1}
+  .upremium{font-size:10px;font-family:'DM Mono',monospace;color:var(--green)}
+  .logout-btn{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);background:none;border:none;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+  .logout-btn:hover{color:var(--text)}
+
+  .warn-bar{background:var(--warn-bg);border:1px solid var(--warn-border);border-radius:8px;padding:9px 14px;margin:10px 1.5rem 0;display:flex;align-items:flex-start;gap:10px}
+  .warn-bar svg{width:14px;height:14px;fill:var(--warn);flex-shrink:0;margin-top:1px}
+  .warn-body{font-size:11px;font-family:'DM Mono',monospace;color:var(--warn);line-height:1.6}
+
+  .app-grid{display:grid;grid-template-columns:1fr 1fr;flex:1}
+  @media(max-width:700px){.app-grid{grid-template-columns:1fr}}
+  .panel{padding:1.5rem;overflow-y:auto}
+  .panel-left{border-right:1px solid var(--border)}
+
+  h2{font-size:17px;font-weight:700;letter-spacing:-0.02em;margin-bottom:3px}
+  .psub{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:1.25rem}
+  label{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);letter-spacing:.08em;display:block;margin-bottom:5px;text-transform:uppercase}
+  input,select{width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);padding:8px 11px;border-radius:6px;font-size:12px;font-family:'DM Mono',monospace;outline:none;transition:border-color .2s}
+  input:focus,select:focus{border-color:var(--green)}
+  select option{background:var(--card)}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+  .field{margin-bottom:8px}
+  .add-btn{background:var(--green);color:#000;border:none;border-radius:6px;padding:9px 14px;width:100%;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s}
+  .add-btn:hover{background:#1ed760}
+  .add-btn:disabled{opacity:.4;cursor:not-allowed}
+  .err{font-size:10px;color:var(--danger);font-family:'DM Mono',monospace;margin-top:4px;min-height:14px}
+
+  .sec-hdr{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:1.25rem 0 .6rem;display:flex;justify-content:space-between;align-items:center}
+  .badge-count{background:var(--card);border:1px solid var(--border);border-radius:3px;padding:1px 5px;font-size:9px}
+
+  .queue{display:flex;flex-direction:column;gap:7px;max-height:380px;overflow-y:auto;padding-right:3px}
+  .queue::-webkit-scrollbar{width:2px}
+  .queue::-webkit-scrollbar-thumb{background:var(--border)}
+  .track-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:9px 11px;display:flex;align-items:center;gap:9px;transition:border-color .2s}
+  .track-card.active{border-color:var(--green)}
+  .tnum{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);min-width:16px;text-align:center}
+  .tinfo{flex:1;min-width:0}
+  .tlabel{font-size:11px;font-family:'DM Mono',monospace;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
+  .tcue{font-size:10px;color:var(--green);font-family:'DM Mono',monospace}
+  .tactions{display:flex;gap:5px;flex-shrink:0}
+  .tbtn{padding:4px 9px;border-radius:4px;font-size:10px;font-family:'DM Mono',monospace;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+  .tbtn-play{background:var(--green);color:#000}
+  .tbtn-play:hover{background:#1ed760}
+  .tbtn-del{background:transparent;color:var(--danger);border:1px solid var(--danger)}
+  .tbtn-del:hover{background:var(--danger);color:#fff}
+  .empty-q{text-align:center;padding:2rem;color:var(--muted);font-size:11px;font-family:'DM Mono',monospace;line-height:1.7}
+
+  /* ── Player panel ── */
+  .now-bar{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:12px}
+  .now-label{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+  .now-title{font-size:13px;font-family:'DM Mono',monospace;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
+  .now-artist{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px}
+  .now-cue{font-size:10px;font-family:'DM Mono',monospace;color:var(--green)}
+
+  .progress-wrap{margin-bottom:12px}
+  .progress-bar{width:100%;height:4px;background:var(--border);border-radius:2px;overflow:hidden;cursor:pointer;margin-bottom:4px}
+  .progress-fill{height:100%;background:var(--green);border-radius:2px;width:0%;transition:width .5s linear}
+  .progress-times{display:flex;justify-content:space-between;font-size:10px;font-family:'DM Mono',monospace;color:var(--muted)}
+
+  .ctrl-row{display:flex;gap:8px;margin-bottom:12px}
+  .ctrl-btn{flex:1;background:var(--card);border:1px solid var(--border);color:var(--text);padding:8px;border-radius:6px;cursor:pointer;font-family:'DM Mono',monospace;font-size:11px;transition:all .15s}
+  .ctrl-btn:hover:not(:disabled){border-color:var(--green);color:var(--green)}
+  .ctrl-btn:disabled{opacity:.3;cursor:not-allowed}
+  .ctrl-btn.primary{background:var(--green);color:#000;border-color:var(--green);font-family:'Syne',sans-serif;font-weight:700;font-size:13px}
+  .ctrl-btn.primary:hover:not(:disabled){background:#1ed760}
+
+  .volume-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .vol-label{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);white-space:nowrap}
+  input[type=range]{padding:0;height:4px;accent-color:var(--green);cursor:pointer}
+
+  .status-pill{display:inline-flex;align-items:center;gap:5px;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:4px 10px;font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);margin-bottom:12px}
+  .status-dot{width:6px;height:6px;border-radius:50%;background:var(--muted)}
+  .status-dot.ready{background:var(--green)}
+  .status-dot.loading{background:var(--warn);animation:pulse 1s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+</style>
+</head>
+<body>
+
+<!-- ══ SPLASH ══ -->
+<div id="splashScreen" class="screen active">
+  <div class="splash-wrap">
+    <div class="splash">
+      <div class="logo-ring">
+        <svg viewBox="0 0 24 24"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+      </div>
+      <h1>Cue Player</h1>
+      <p class="splash-sub">queue spotify tracks with custom start times. requires spotify premium.</p>
+      <div class="features">
+        <div class="feat"><div class="dot"></div><span>paste any spotify track url</span></div>
+        <div class="feat"><div class="dot"></div><span>set exact cue start times (mm:ss)</span></div>
+        <div class="feat"><div class="dot"></div><span>real seeking via web playback sdk</span></div>
+        <div class="feat"><div class="dot"></div><span>live progress bar + volume control</span></div>
+      </div>
+      <button class="btn-spotify" onclick="startLogin()">
+        <svg viewBox="0 0 24 24"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+        connect with spotify
+      </button>
+      <p class="splash-note">you'll be redirected to spotify to log in, then brought back here automatically.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ LOADING ══ -->
+<div id="loadingScreen" class="screen">
+  <div class="loading-wrap">
+    <div class="spinner"></div>
+    <div class="loading-text" id="loadingText">connecting to spotify…</div>
+  </div>
+</div>
+
+<!-- ══ APP ══ -->
+<div id="appScreen" class="screen">
+  <div class="user-bar">
+    <div class="avatar" id="uAvatar">SP</div>
+    <div style="flex:1">
+      <div class="uname" id="uName">Spotify User</div>
+      <div class="upremium" id="uPremium">premium · web playback ready</div>
+    </div>
+    <button class="logout-btn" onclick="logout()">disconnect</button>
+  </div>
+
+  <div id="warnBar" class="warn-bar" style="display:none">
+    <svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+    <div class="warn-body" id="warnText"></div>
+  </div>
+
+  <div class="app-grid">
+    <!-- LEFT: queue -->
+    <div class="panel panel-left">
+      <h2>Cue Player</h2>
+      <div class="psub">// queue with start times</div>
+
+      <div class="field">
+        <label>Spotify Track URL</label>
+        <input type="text" id="urlInput" placeholder="https://open.spotify.com/track/..." />
+      </div>
+      <div class="two-col">
+        <div class="field">
+          <label>Start time (mm:ss)</label>
+          <input type="text" id="startInput" placeholder="0:00" value="0:00" />
+        </div>
+        <div class="field">
+          <label>Label (optional)</label>
+          <input type="text" id="labelInput" placeholder="Verse 1..." />
+        </div>
+      </div>
+      <div class="err" id="errMsg"></div>
+      <button class="add-btn" onclick="addTrack()">+ Add to Queue</button>
+
+      <div class="sec-hdr">
+        <span>Queue</span>
+        <span class="badge-count" id="qCount">0 tracks</span>
+      </div>
+      <div class="queue" id="queueEl">
+        <div class="empty-q">no tracks yet<br>paste a spotify track url above</div>
+      </div>
+    </div>
+
+    <!-- RIGHT: player -->
+    <div class="panel">
+      <h2>Now Playing</h2>
+      <div class="psub">// trigger tracks one by one</div>
+
+      <div class="status-pill">
+        <div class="status-dot loading" id="statusDot"></div>
+        <span id="statusText">initializing player…</span>
+      </div>
+
+      <div class="now-bar">
+        <div class="now-label">current track</div>
+        <div class="now-title" id="nowTitle">— nothing loaded —</div>
+        <div class="now-artist" id="nowArtist"></div>
+        <div class="now-cue" id="nowCue"></div>
+      </div>
+
+      <div class="progress-wrap">
+        <div class="progress-bar" onclick="seekFromBar(event)">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-times">
+          <span id="timeNow">0:00</span>
+          <span id="timeDur">0:00</span>
+        </div>
+      </div>
+
+      <div class="ctrl-row">
+        <button class="ctrl-btn" id="prevBtn" onclick="prevTrack()" disabled>← prev</button>
+        <button class="ctrl-btn primary" id="playPauseBtn" onclick="togglePlay()" disabled>▶ play</button>
+        <button class="ctrl-btn" id="nextBtn" onclick="nextTrack()" disabled>next →</button>
+      </div>
+
+      <div class="volume-row">
+        <span class="vol-label">volume</span>
+        <input type="range" id="volSlider" min="0" max="100" value="80" oninput="setVolume(this.value)" style="flex:1" />
+        <span class="vol-label" id="volVal">80%</span>
+      </div>
+
+      <div>
+        <div class="sec-hdr"><span>Jump to track</span></div>
+        <select id="jumpSel" onchange="jumpTo(this.value)">
+          <option value="">— select —</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ─────────────────────────────────────────
+   CONFIG — update these if you fork
+───────────────────────────────────────── */
+const CLIENT_ID = '3e1c36fd35a3425194ed2673a43a8b43';
+const REDIRECT_URI = window.location.origin + window.location.pathname;
+const SCOPES = [
+  'streaming',
+  'user-read-email',
+  'user-read-private',
+  'user-read-playback-state',
+  'user-modify-playback-state'
+].join(' ');
+
+/* ─────────────────────────────────────────
+   State
+───────────────────────────────────────── */
+let queue = [], currentIdx = -1;
+let player = null, deviceId = null;
+let accessToken = null;
+let currentDuration = 0, progressInterval = null;
+let isPlaying = false;
+
+/* ─────────────────────────────────────────
+   PKCE helpers
+───────────────────────────────────────── */
+function randomString(len) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
+  return Array.from(crypto.getRandomValues(new Uint8Array(len))).map(b => chars[b % chars.length]).join('');
+}
+
+async function sha256(plain) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(plain);
+  return await crypto.subtle.digest('SHA-256', data);
+}
+
+function base64urlEncode(buffer) {
+  return btoa(String.fromCharCode(...new Uint8Array(buffer)))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+
+async function startLogin() {
+  const verifier = randomString(64);
+  const hashed = await sha256(verifier);
+  const challenge = base64urlEncode(hashed);
+  sessionStorage.setItem('pkce_verifier', verifier);
+
+  const params = new URLSearchParams({
+    client_id: CLIENT_ID,
+    response_type: 'code',
+    redirect_uri: REDIRECT_URI,
+    code_challenge_method: 'S256',
+    code_challenge: challenge,
+    scope: SCOPES,
+  });
+  window.location = 'https://accounts.spotify.com/authorize?' + params.toString();
+}
+
+async function exchangeCode(code) {
+  const verifier = sessionStorage.getItem('pkce_verifier');
+  const body = new URLSearchParams({
+    client_id: CLIENT_ID,
+    grant_type: 'authorization_code',
+    code,
+    redirect_uri: REDIRECT_URI,
+    code_verifier: verifier,
+  });
+  const res = await fetch('https://accounts.spotify.com/api/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: body.toString(),
+  });
+  const data = await res.json();
+  if (data.access_token) {
+    accessToken = data.access_token;
+    sessionStorage.setItem('sp_token', accessToken);
+    sessionStorage.setItem('sp_token_exp', Date.now() + (data.expires_in - 60) * 1000);
+    // Clean URL
+    window.history.replaceState({}, '', window.location.pathname);
+    return true;
+  }
+  return false;
+}
+
+async function refreshIfNeeded() {
+  const exp = parseInt(sessionStorage.getItem('sp_token_exp') || '0');
+  if (Date.now() > exp) {
+    sessionStorage.clear();
+    return false;
+  }
+  accessToken = sessionStorage.getItem('sp_token');
+  return !!accessToken;
+}
+
+/* ─────────────────────────────────────────
+   Spotify API calls
+───────────────────────────────────────── */
+async function apiGet(path) {
+  const res = await fetch('https://api.spotify.com/v1' + path, {
+    headers: { Authorization: 'Bearer ' + accessToken }
+  });
+  return res.ok ? res.json() : null;
+}
+
+async function apiPut(path, body) {
+  await fetch('https://api.spotify.com/v1' + path, {
+    method: 'PUT',
+    headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined
+  });
+}
+
+async function getUserProfile() {
+  return await apiGet('/me');
+}
+
+/* ─────────────────────────────────────────
+   Web Playback SDK
+───────────────────────────────────────── */
+function loadSDK() {
+  return new Promise((resolve) => {
+    window.onSpotifyWebPlaybackSDKReady = resolve;
+    const s = document.createElement('script');
+    s.src = 'https://sdk.scdn.co/spotify-player.js';
+    document.head.appendChild(s);
+  });
+}
+
+async function initPlayer() {
+  await loadSDK();
+  player = new Spotify.Player({
+    name: 'Cue Player',
+    getOAuthToken: cb => cb(accessToken),
+    volume: 0.8
+  });
+
+  player.addListener('ready', ({ device_id }) => {
+    deviceId = device_id;
+    setStatus('ready', 'player ready');
+    updateControls();
+  });
+
+  player.addListener('not_ready', () => {
+    setStatus('loading', 'player offline');
+    deviceId = null;
+  });
+
+  player.addListener('player_state_changed', (state) => {
+    if (!state) return;
+    isPlaying = !state.paused;
+    document.getElementById('playPauseBtn').textContent = isPlaying ? '⏸ pause' : '▶ play';
+    currentDuration = state.duration;
+    updateProgress(state.position, state.duration);
+
+    if (progressInterval) clearInterval(progressInterval);
+    if (!state.paused) {
+      let pos = state.position;
+      progressInterval = setInterval(() => {
+        pos += 500;
+        updateProgress(pos, state.duration);
+      }, 500);
+    }
+
+    // Track name from SDK state
+    if (state.track_window?.current_track) {
+      const tr = state.track_window.current_track;
+      document.getElementById('nowTitle').textContent = tr.name;
+      document.getElementById('nowArtist').textContent = tr.artists.map(a => a.name).join(', ');
+    }
+  });
+
+  player.addListener('initialization_error', ({ message }) => showWarn('Player init error: ' + message));
+  player.addListener('authentication_error', ({ message }) => showWarn('Auth error: ' + message));
+  player.addListener('account_error', () => showWarn('Spotify Premium is required for the Web Playback SDK.'));
+
+  player.connect();
+}
+
+/* ─────────────────────────────────────────
+   Progress bar
+───────────────────────────────────────── */
+function updateProgress(pos, dur) {
+  const pct = dur > 0 ? (pos / dur) * 100 : 0;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('timeNow').textContent = formatTime(Math.floor(pos / 1000));
+  document.getElementById('timeDur').textContent = formatTime(Math.floor(dur / 1000));
+}
+
+function seekFromBar(e) {
+  if (!player || !currentDuration) return;
+  const bar = e.currentTarget;
+  const pct = e.offsetX / bar.offsetWidth;
+  const ms = Math.floor(pct * currentDuration);
+  player.seek(ms);
+}
+
+/* ─────────────────────────────────────────
+   Playback controls
+───────────────────────────────────────── */
+async function loadTrack(i) {
+  if (!deviceId) { showWarn('Player not ready yet — wait a moment and try again.'); return; }
+  currentIdx = i;
+  const t = queue[i];
+
+  document.getElementById('nowTitle').textContent = t.label;
+  document.getElementById('nowArtist').textContent = '';
+  document.getElementById('nowCue').textContent = `cue point: ${t.displayStart}${t.startSec ? ` (${t.startSec}s)` : ''}`;
+
+  const uri = `spotify:track:${t.id}`;
+  // Start playback on our SDK device
+  await apiPut(`/me/player/play?device_id=${deviceId}`, {
+    uris: [uri],
+    position_ms: t.startSec * 1000
+  });
+
+  isPlaying = true;
+  document.getElementById('playPauseBtn').textContent = '⏸ pause';
+  renderQueue();
+  updateControls();
+  hideWarn();
+}
+
+async function togglePlay() {
+  if (!player) return;
+  await player.togglePlay();
+}
+
+function prevTrack() { if (currentIdx > 0) loadTrack(currentIdx - 1); }
+function nextTrack() { if (currentIdx < queue.length - 1) loadTrack(currentIdx + 1); }
+function jumpTo(val) { if (val !== '') loadTrack(parseInt(val)); }
+
+async function setVolume(val) {
+  document.getElementById('volVal').textContent = val + '%';
+  if (player) await player.setVolume(val / 100);
+}
+
+/* ─────────────────────────────────────────
+   Queue
+───────────────────────────────────────── */
+function parseTime(t) {
+  const p = t.trim().split(':');
+  return p.length === 2 ? (parseInt(p[0])||0)*60+(parseInt(p[1])||0) : (parseInt(p[0])||0);
+}
+function formatTime(s) {
+  return `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
+}
+function extractTrackId(url) {
+  const m = url.match(/spotify\.com\/track\/([a-zA-Z0-9]+)/);
+  return m ? m[1] : null;
+}
+
+function addTrack() {
+  const url = document.getElementById('urlInput').value.trim();
+  const start = document.getElementById('startInput').value.trim() || '0:00';
+  const label = document.getElementById('labelInput').value.trim();
+  const err = document.getElementById('errMsg');
+  err.textContent = '';
+
+  if (!url) { err.textContent = 'paste a spotify track url first'; return; }
+  const id = extractTrackId(url);
+  if (!id) { err.textContent = 'must be a spotify track url (not album/playlist)'; return; }
+
+  const startSec = parseTime(start);
+  queue.push({ url, id, startSec, displayStart: formatTime(startSec), label: label || `track #${queue.length + 1}` });
+  document.getElementById('urlInput').value = '';
+  document.getElementById('startInput').value = '0:00';
+  document.getElementById('labelInput').value = '';
+  if (currentIdx === -1) currentIdx = 0;
+  renderQueue(); updateControls();
+}
+
+function renderQueue() {
+  const el = document.getElementById('queueEl');
+  const js = document.getElementById('jumpSel');
+  document.getElementById('qCount').textContent = `${queue.length} track${queue.length !== 1 ? 's' : ''}`;
+  js.innerHTML = '<option value="">— select —</option>';
+  queue.forEach((t, i) => {
+    const o = document.createElement('option');
+    o.value = i; o.textContent = `${i+1}. ${t.label} @ ${t.displayStart}`;
+    js.appendChild(o);
+  });
+  if (!queue.length) { el.innerHTML = '<div class="empty-q">no tracks yet<br>paste a spotify track url above</div>'; return; }
+  el.innerHTML = queue.map((t,i) => `
+    <div class="track-card${i===currentIdx?' active':''}">
+      <span class="tnum">${i+1}</span>
+      <div class="tinfo">
+        <div class="tlabel">${t.label}</div>
+        <div class="tcue">cue @ ${t.displayStart}</div>
+      </div>
+      <div class="tactions">
+        <button class="tbtn tbtn-play" onclick="loadTrack(${i})">play</button>
+        <button class="tbtn tbtn-del" onclick="removeTrack(${i})">remove</button>
+      </div>
+    </div>`).join('');
+}
+
+function removeTrack(i) {
+  queue.splice(i, 1);
+  if (currentIdx >= queue.length) currentIdx = Math.max(0, queue.length - 1);
+  if (!queue.length) currentIdx = -1;
+  renderQueue(); updateControls();
+}
+
+function updateControls() {
+  const has = queue.length > 0 && !!deviceId;
+  document.getElementById('playPauseBtn').disabled = !deviceId;
+  document.getElementById('prevBtn').disabled = currentIdx <= 0 || !deviceId;
+  document.getElementById('nextBtn').disabled = currentIdx >= queue.length-1 || !deviceId;
+}
+
+/* ─────────────────────────────────────────
+   UI helpers
+───────────────────────────────────────── */
+function show(id) {
+  ['splashScreen','loadingScreen','appScreen'].forEach(s => {
+    document.getElementById(s).classList.toggle('active', s === id);
+  });
+}
+
+function setStatus(type, text) {
+  const dot = document.getElementById('statusDot');
+  dot.className = 'status-dot ' + (type === 'ready' ? 'ready' : 'loading');
+  document.getElementById('statusText').textContent = text;
+}
+
+function showWarn(msg) {
+  const b = document.getElementById('warnBar');
+  document.getElementById('warnText').textContent = msg;
+  b.style.display = 'flex';
+}
+function hideWarn() { document.getElementById('warnBar').style.display = 'none'; }
+
+function logout() {
+  sessionStorage.clear();
+  if (player) { player.disconnect(); player = null; }
+  if (progressInterval) clearInterval(progressInterval);
+  queue = []; currentIdx = -1; accessToken = null; deviceId = null;
+  show('splashScreen');
+}
+
+/* ─────────────────────────────────────────
+   Boot — check for OAuth callback or stored token
+───────────────────────────────────────── */
+async function boot() {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
+  const error = params.get('error');
+
+  if (error) {
+    // User denied access
+    show('splashScreen');
+    return;
+  }
+
+  if (code) {
+    show('loadingScreen');
+    document.getElementById('loadingText').textContent = 'exchanging token…';
+    const ok = await exchangeCode(code);
+    if (!ok) { show('splashScreen'); return; }
+  } else {
+    const ok = await refreshIfNeeded();
+    if (!ok) { show('splashScreen'); return; }
+  }
+
+  // We have a token — load app
+  show('loadingScreen');
+  document.getElementById('loadingText').textContent = 'loading your profile…';
+  const profile = await getUserProfile();
+  if (profile) {
+    document.getElementById('uName').textContent = profile.display_name || 'Spotify User';
+    document.getElementById('uAvatar').textContent = (profile.display_name || 'S').slice(0,2).toUpperCase();
+    if (profile.product !== 'premium') {
+      showWarn('Spotify Premium is required for real-time seeking and playback control.');
+    }
+  }
+
+  document.getElementById('loadingText').textContent = 'initializing playback…';
+  show('appScreen');
+  renderQueue();
+  updateControls();
+  await initPlayer();
+}
+
+boot();
+</script>
+</body>
+</html>

@@ -7,162 +7,238 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet" />
 <style>
-  *{box-sizing:border-box;margin:0;padding:0}
-  :root{--bg:#0a0a0a;--surface:#141414;--card:#1c1c1c;--border:#2a2a2a;--green:#1db954;--green-dim:#145c2e;--text:#f5f5f5;--muted:#666;--danger:#e24b4a;--warn:#f59e0b;--warn-bg:#1a1500;--warn-border:#3a3010}
-  html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Syne',sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0a;--surface:#141414;--card:#1c1c1c;--card2:#222;--border:#2a2a2a;
+  --green:#1db954;--green-dim:#0d3320;--green-mid:#145c2e;
+  --text:#f5f5f5;--muted:#666;--muted2:#888;
+  --danger:#e24b4a;--warn:#f59e0b;--warn-bg:#1a1500;--warn-border:#3a3010;
+  --amber:#f59e0b;--blue:#3b82f6;
+}
+html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Syne',sans-serif}
+.screen{display:none}
+.screen.active{display:flex;flex-direction:column;min-height:100vh}
 
-  .screen{display:none}
-  .screen.active{display:flex;flex-direction:column;min-height:100vh}
+/* ── Splash ── */
+#splashScreen{align-items:center;justify-content:center}
+.splash{display:flex;flex-direction:column;align-items:center;text-align:center;padding:3rem 2rem;max-width:420px;width:100%}
+.logo-ring{width:72px;height:72px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:1.5rem}
+.logo-ring svg{width:36px;height:36px;fill:#000}
+.splash h1{font-size:28px;font-weight:700;letter-spacing:-0.03em;margin-bottom:10px}
+.splash-sub{color:var(--muted);font-size:12px;font-family:'DM Mono',monospace;line-height:1.8;max-width:280px;margin-bottom:2rem}
+.features{display:flex;flex-direction:column;gap:10px;margin-bottom:2.5rem;text-align:left;width:100%;max-width:280px}
+.feat{display:flex;align-items:center;gap:10px;font-size:12px;font-family:'DM Mono',monospace;color:var(--muted)}
+.dot{width:6px;height:6px;background:var(--green);border-radius:50%;flex-shrink:0}
+.btn-spotify{display:flex;align-items:center;justify-content:center;gap:10px;background:var(--green);color:#000;border:none;border-radius:500px;padding:15px 36px;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.15s;width:100%;max-width:300px}
+.btn-spotify:hover{background:#1ed760;transform:scale(1.02)}
+.btn-spotify svg{width:20px;height:20px;fill:#000}
+.splash-note{margin-top:14px;font-size:10px;font-family:'DM Mono',monospace;color:#444;line-height:1.7;max-width:300px}
 
-  /* ── Splash ── */
-  .splash-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:2rem}
-  .splash{display:flex;flex-direction:column;align-items:center;text-align:center;max-width:400px;width:100%}
-  .logo-ring{width:72px;height:72px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:1.5rem}
-  .logo-ring svg{width:36px;height:36px;fill:#000}
-  .splash h1{font-size:30px;font-weight:700;letter-spacing:-0.03em;margin-bottom:10px}
-  .splash-sub{color:var(--muted);font-size:12px;font-family:'DM Mono',monospace;line-height:1.8;max-width:280px;margin-bottom:2rem}
-  .features{display:flex;flex-direction:column;gap:10px;margin-bottom:2.5rem;text-align:left;width:100%;max-width:280px}
-  .feat{display:flex;align-items:center;gap:10px;font-size:12px;font-family:'DM Mono',monospace;color:var(--muted)}
-  .dot{width:6px;height:6px;background:var(--green);border-radius:50%;flex-shrink:0}
-  .btn-spotify{display:flex;align-items:center;justify-content:center;gap:10px;background:var(--green);color:#000;border:none;border-radius:500px;padding:15px 36px;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.15s;width:100%;max-width:300px}
-  .btn-spotify:hover{background:#1ed760;transform:scale(1.02)}
-  .btn-spotify svg{width:20px;height:20px;fill:#000}
-  .splash-note{margin-top:14px;font-size:10px;font-family:'DM Mono',monospace;color:#444;line-height:1.7;max-width:300px}
+/* ── Loading ── */
+#loadingScreen{align-items:center;justify-content:center}
+.loading-wrap{display:flex;flex-direction:column;align-items:center;gap:16px}
+.spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-size:12px;font-family:'DM Mono',monospace;color:var(--muted)}
 
-  /* ── Loading ── */
-  .loading-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
-  .spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin 0.8s linear infinite}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  .loading-text{font-size:12px;font-family:'DM Mono',monospace;color:var(--muted)}
+/* ── Top bar ── */
+.user-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:8px 1.5rem;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.avatar{width:28px;height:28px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#000;flex-shrink:0}
+.uname{font-size:12px;font-family:'DM Mono',monospace;flex:1}
+.upremium{font-size:10px;font-family:'DM Mono',monospace;color:var(--green)}
+.logout-btn{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);background:none;border:none;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.logout-btn:hover{color:var(--text)}
+.warn-bar{background:var(--warn-bg);border:1px solid var(--warn-border);border-radius:8px;padding:9px 14px;margin:10px 1.5rem 0;display:flex;align-items:flex-start;gap:10px}
+.warn-bar svg{width:14px;height:14px;fill:var(--warn);flex-shrink:0;margin-top:1px}
+.warn-body{font-size:11px;font-family:'DM Mono',monospace;color:var(--warn);line-height:1.6}
 
-  /* ── App ── */
-  .user-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:8px 1.5rem;display:flex;align-items:center;gap:10px;flex-shrink:0}
-  .avatar{width:28px;height:28px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#000;flex-shrink:0}
-  .uname{font-size:12px;font-family:'DM Mono',monospace;flex:1}
-  .upremium{font-size:10px;font-family:'DM Mono',monospace;color:var(--green)}
-  .logout-btn{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);background:none;border:none;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
-  .logout-btn:hover{color:var(--text)}
+/* ── Main grid ── */
+.app-grid{display:grid;grid-template-columns:1fr 1fr;flex:1;overflow:hidden}
+@media(max-width:760px){.app-grid{grid-template-columns:1fr;overflow:auto}}
+.panel{padding:1.25rem 1.5rem;overflow-y:auto}
+.panel-left{border-right:1px solid var(--border)}
+h2{font-size:16px;font-weight:700;letter-spacing:-0.02em;margin-bottom:2px}
+.psub{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:1rem}
 
-  .warn-bar{background:var(--warn-bg);border:1px solid var(--warn-border);border-radius:8px;padding:9px 14px;margin:10px 1.5rem 0;display:flex;align-items:flex-start;gap:10px}
-  .warn-bar svg{width:14px;height:14px;fill:var(--warn);flex-shrink:0;margin-top:1px}
-  .warn-body{font-size:11px;font-family:'DM Mono',monospace;color:var(--warn);line-height:1.6}
+/* ── Form elements ── */
+label{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);letter-spacing:.08em;display:block;margin-bottom:4px;text-transform:uppercase}
+input[type=text],select{width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:12px;font-family:'DM Mono',monospace;outline:none;transition:border-color .2s}
+input[type=text]:focus,select:focus{border-color:var(--green)}
+select option{background:var(--card)}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px}
+.three-col{display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;margin-bottom:6px}
+.field{margin-bottom:7px}
+.add-btn{background:var(--green);color:#000;border:none;border-radius:6px;padding:8px 14px;width:100%;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s}
+.add-btn:hover{background:#1ed760}
+.err{font-size:10px;color:var(--danger);font-family:'DM Mono',monospace;margin-top:3px;min-height:14px}
 
-  .app-grid{display:grid;grid-template-columns:1fr 1fr;flex:1}
-  @media(max-width:700px){.app-grid{grid-template-columns:1fr}}
-  .panel{padding:1.5rem;overflow-y:auto}
-  .panel-left{border-right:1px solid var(--border)}
+/* ── Section headers ── */
+.sec-hdr{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:1rem 0 .5rem;display:flex;align-items:center;gap:6px}
+.sec-hdr-right{margin-left:auto;display:flex;align-items:center;gap:6px}
+.badge{background:var(--card);border:1px solid var(--border);border-radius:3px;padding:1px 5px;font-size:9px;color:var(--muted2)}
 
-  h2{font-size:17px;font-weight:700;letter-spacing:-0.02em;margin-bottom:3px}
-  .psub{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:1.25rem}
-  label{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);letter-spacing:.08em;display:block;margin-bottom:5px;text-transform:uppercase}
-  input,select{width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);padding:8px 11px;border-radius:6px;font-size:12px;font-family:'DM Mono',monospace;outline:none;transition:border-color .2s}
-  input:focus,select:focus{border-color:var(--green)}
-  select option{background:var(--card)}
-  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
-  .field{margin-bottom:8px}
-  .add-btn{background:var(--green);color:#000;border:none;border-radius:6px;padding:9px 14px;width:100%;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s}
-  .add-btn:hover{background:#1ed760}
-  .add-btn:disabled{opacity:.4;cursor:not-allowed}
-  .err{font-size:10px;color:var(--danger);font-family:'DM Mono',monospace;margin-top:4px;min-height:14px}
+/* ── Buttons ── */
+.icon-btn{background:var(--card);border:1px solid var(--border);color:var(--muted2);border-radius:4px;padding:3px 7px;font-size:10px;font-family:'DM Mono',monospace;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:4px}
+.icon-btn:hover{border-color:var(--green);color:var(--green)}
+.icon-btn.active{background:var(--green-dim);border-color:var(--green-mid);color:var(--green)}
+.micro-btn{padding:3px 8px;border-radius:3px;font-size:10px;font-family:'DM Mono',monospace;font-weight:600;cursor:pointer;border:none;transition:all .15s;white-space:nowrap}
+.mb-green{background:var(--green);color:#000}
+.mb-green:hover{background:#1ed760}
+.mb-dim{background:var(--green-dim);color:var(--green);border:1px solid var(--green-mid)}
+.mb-dim:hover{background:var(--green);color:#000}
+.mb-ghost{background:transparent;color:var(--muted2);border:1px solid var(--border)}
+.mb-ghost:hover{border-color:var(--muted2);color:var(--text)}
+.mb-danger{background:transparent;color:var(--danger);border:1px solid transparent}
+.mb-danger:hover{border-color:var(--danger)}
+.mb-warn{background:transparent;color:var(--amber);border:1px solid var(--amber)}
+.mb-warn:hover{background:var(--amber);color:#000}
 
-  .sec-hdr{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:1.25rem 0 .6rem;display:flex;justify-content:space-between;align-items:center}
-  .badge-count{background:var(--card);border:1px solid var(--border);border-radius:3px;padding:1px 5px;font-size:9px}
+/* ── Queue ── */
+.queue-wrap{display:flex;flex-direction:column;gap:6px;max-height:360px;overflow-y:auto;padding-right:2px}
+.queue-wrap::-webkit-scrollbar{width:2px}
+.queue-wrap::-webkit-scrollbar-thumb{background:var(--border)}
 
-  .queue{display:flex;flex-direction:column;gap:7px;max-height:380px;overflow-y:auto;padding-right:3px}
-  .queue::-webkit-scrollbar{width:2px}
-  .queue::-webkit-scrollbar-thumb{background:var(--border)}
-  .track-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:9px 11px;display:flex;align-items:center;gap:9px;transition:border-color .2s}
-  .track-card.active{border-color:var(--green)}
-  .tnum{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);min-width:16px;text-align:center}
-  .tinfo{flex:1;min-width:0}
-  .tlabel{font-size:11px;font-family:'DM Mono',monospace;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
-  .tcue{font-size:10px;color:var(--green);font-family:'DM Mono',monospace}
-  .tactions{display:flex;gap:5px;flex-shrink:0}
-  .tbtn{padding:4px 9px;border-radius:4px;font-size:10px;font-family:'DM Mono',monospace;font-weight:600;cursor:pointer;border:none;transition:all .15s}
-  .tbtn-play{background:var(--green);color:#000}
-  .tbtn-play:hover{background:#1ed760}
-  .tbtn-del{background:transparent;color:var(--danger);border:1px solid var(--danger)}
-  .tbtn-del:hover{background:var(--danger);color:#fff}
-  .empty-q{text-align:center;padding:2rem;color:var(--muted);font-size:11px;font-family:'DM Mono',monospace;line-height:1.7}
+.track-card{background:var(--card);border:1px solid var(--border);border-radius:8px;transition:border-color .2s;user-select:none}
+.track-card.active{border-color:var(--green)}
+.track-card.cued{border-color:var(--amber)}
+.track-card.dragging{opacity:.4}
+.track-card.drag-over{border-color:var(--blue);box-shadow:0 -2px 0 var(--blue)}
 
-  /* ── Player panel ── */
-  .now-bar{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:12px}
-  .now-label{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
-  .now-title{font-size:13px;font-family:'DM Mono',monospace;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
-  .now-artist{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px}
-  .now-cue{font-size:10px;font-family:'DM Mono',monospace;color:var(--green)}
+.card-main{padding:8px 10px;display:flex;align-items:center;gap:8px}
+.drag-handle{color:var(--border);cursor:grab;font-size:14px;line-height:1;flex-shrink:0;display:none;padding:0 2px}
+.drag-handle:active{cursor:grabbing}
+.reorder-mode .drag-handle{display:block}
+.reorder-mode .card-arrows{display:none}
+.card-arrows{display:flex;flex-direction:column;gap:1px;flex-shrink:0}
+.arr-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:10px;line-height:1;padding:1px 3px;border-radius:2px}
+.arr-btn:hover{color:var(--text);background:var(--card2)}
+.arr-btn:disabled{opacity:.25;cursor:not-allowed}
+.tnum{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);min-width:16px;text-align:center;flex-shrink:0}
+.tinfo{flex:1;min-width:0}
+.tlabel{font-size:11px;font-family:'DM Mono',monospace;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
+.tmeta{display:flex;align-items:center;gap:8px}
+.tcue{font-size:10px;color:var(--green);font-family:'DM Mono',monospace}
+.tdur{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace}
+.tactions{display:flex;gap:4px;flex-shrink:0;align-items:center}
 
-  .progress-wrap{margin-bottom:12px}
-  .progress-bar{width:100%;height:4px;background:var(--border);border-radius:2px;overflow:hidden;cursor:pointer;margin-bottom:4px}
-  .progress-fill{height:100%;background:var(--green);border-radius:2px;width:0%;transition:width .5s linear}
-  .progress-times{display:flex;justify-content:space-between;font-size:10px;font-family:'DM Mono',monospace;color:var(--muted)}
+/* inline edit form */
+.card-edit{padding:10px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:6px}
+.card-edit input{font-size:11px;padding:5px 8px}
+.edit-row{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.edit-actions{display:flex;gap:6px;justify-content:flex-end}
 
-  .ctrl-row{display:flex;gap:8px;margin-bottom:12px}
-  .ctrl-btn{flex:1;background:var(--card);border:1px solid var(--border);color:var(--text);padding:8px;border-radius:6px;cursor:pointer;font-family:'DM Mono',monospace;font-size:11px;transition:all .15s}
-  .ctrl-btn:hover:not(:disabled){border-color:var(--green);color:var(--green)}
-  .ctrl-btn:disabled{opacity:.3;cursor:not-allowed}
-  .ctrl-btn.primary{background:var(--green);color:#000;border-color:var(--green);font-family:'Syne',sans-serif;font-weight:700;font-size:13px}
-  .ctrl-btn.primary:hover:not(:disabled){background:#1ed760}
+.empty-q{text-align:center;padding:2rem;color:var(--muted);font-size:11px;font-family:'DM Mono',monospace;line-height:1.7}
 
-  .volume-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
-  .vol-label{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);white-space:nowrap}
-  input[type=range]{padding:0;height:4px;accent-color:var(--green);cursor:pointer}
+/* ── Playlist manager ── */
+.pl-box{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;margin-top:1rem}
+.pl-save-row{display:flex;gap:6px;margin-bottom:6px}
+.pl-save-row input{flex:1;font-size:11px;padding:6px 9px}
+.pl-confirm{background:var(--warn-bg);border:1px solid var(--warn-border);border-radius:6px;padding:8px 10px;font-size:11px;font-family:'DM Mono',monospace;color:var(--amber);margin-bottom:6px;display:none}
+.pl-confirm-btns{display:flex;gap:6px;margin-top:6px}
+.pl-toast{font-size:10px;font-family:'DM Mono',monospace;color:var(--green);min-height:14px;margin-bottom:6px}
+.pl-list{display:flex;flex-direction:column;gap:5px;max-height:200px;overflow-y:auto}
+.pl-list::-webkit-scrollbar{width:2px}
+.pl-list::-webkit-scrollbar-thumb{background:var(--border)}
+.pl-item{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:7px 10px}
+.pl-item-top{display:flex;align-items:center;gap:8px}
+.pl-name-display{flex:1;font-size:11px;font-family:'DM Mono',monospace;color:var(--text);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pl-name-display:hover{color:var(--green)}
+.pl-name-input{flex:1;font-size:11px;padding:3px 7px;display:none}
+.pl-meta{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);margin-top:2px}
+.pl-actions{display:flex;gap:4px;flex-shrink:0}
+.pl-import-conflict{font-size:10px;font-family:'DM Mono',monospace;color:var(--amber);padding:6px 10px;background:var(--warn-bg);border-radius:4px;margin-bottom:4px}
+.pl-empty{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);text-align:center;padding:10px 0}
+.pl-io-row{display:flex;gap:6px;margin-top:8px}
+.pl-io-row button{flex:1}
+#importFileInput{display:none}
 
-  .status-pill{display:inline-flex;align-items:center;gap:5px;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:4px 10px;font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);margin-bottom:12px}
-  .status-dot{width:6px;height:6px;border-radius:50%;background:var(--muted)}
-  .status-dot.ready{background:var(--green)}
-  .status-dot.loading{background:var(--warn);animation:pulse 1s ease-in-out infinite}
-  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+/* ── Player panel ── */
+.player-panel-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.hotkey-toggle{display:inline-flex;align-items:center;gap:5px;border-radius:20px;padding:3px 9px;font-size:10px;font-family:'DM Mono',monospace;cursor:pointer;border:none;transition:all .2s}
+.hk-auto{background:#2a2000;color:var(--amber);border:1px solid #4a3800}
+.hk-armed{background:var(--green-dim);color:var(--green);border:1px solid var(--green-mid)}
+.hk-disarmed{background:var(--card);color:var(--muted);border:1px solid var(--border)}
+.hk-dot{width:5px;height:5px;border-radius:50%}
+.hk-auto .hk-dot{background:var(--amber)}
+.hk-armed .hk-dot{background:var(--green)}
+.hk-disarmed .hk-dot{background:var(--muted)}
 
-  /* ── Playlist manager ── */
-  .pl-section{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px}
-  .pl-title{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
-  .pl-save-row{display:flex;gap:6px;margin-bottom:10px}
-  .pl-save-row input{flex:1;font-size:11px;padding:6px 10px}
-  .pl-save-btn{background:var(--green);color:#000;border:none;border-radius:5px;padding:6px 12px;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0}
-  .pl-save-btn:hover{background:#1ed760}
-  .pl-save-btn:disabled{opacity:.4;cursor:not-allowed}
-  .pl-list{display:flex;flex-direction:column;gap:5px;max-height:180px;overflow-y:auto}
-  .pl-list::-webkit-scrollbar{width:2px}
-  .pl-list::-webkit-scrollbar-thumb{background:var(--border)}
-  .pl-item{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:7px 10px;transition:border-color .15s}
-  .pl-item:hover{border-color:var(--green)}
-  .pl-item-info{flex:1;min-width:0}
-  .pl-item-name{font-size:11px;font-family:'DM Mono',monospace;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .pl-item-meta{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);margin-top:1px}
-  .pl-item-btns{display:flex;gap:4px;flex-shrink:0}
-  .pl-btn{padding:3px 8px;border-radius:3px;font-size:10px;font-family:'DM Mono',monospace;font-weight:600;cursor:pointer;border:none;transition:all .15s}
-  .pl-btn-load{background:var(--green-dim);color:var(--green);border:1px solid var(--green-dim)}
-  .pl-btn-load:hover{background:var(--green);color:#000}
-  .pl-btn-del{background:transparent;color:var(--danger);border:1px solid transparent}
-  .pl-btn-del:hover{border-color:var(--danger)}
-  .pl-empty{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);text-align:center;padding:12px 0}
-  .pl-toast{font-size:10px;font-family:'DM Mono',monospace;color:var(--green);margin-top:6px;min-height:14px;text-align:center}
+.now-panel{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:10px;transition:border-color .2s;cursor:default}
+.now-panel.focused{border-color:var(--green)}
+.now-panel.cued-state{border-color:var(--amber)}
+.now-label{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between}
+.now-state-badge{font-size:9px;padding:1px 6px;border-radius:3px;font-family:'DM Mono',monospace}
+.nsb-playing{background:var(--green-dim);color:var(--green)}
+.nsb-paused{background:var(--card2);color:var(--muted2)}
+.nsb-cued{background:#2a2000;color:var(--amber)}
+.nsb-idle{background:var(--card2);color:var(--muted)}
+.now-title{font-size:13px;font-family:'DM Mono',monospace;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
+.now-artist{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px}
+.now-cue{font-size:10px;font-family:'DM Mono',monospace;color:var(--green)}
+.now-focus-hint{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);text-align:center;padding:4px 0 0;opacity:.6}
+
+.progress-wrap{margin-bottom:10px}
+.progress-bar{width:100%;height:4px;background:var(--border);border-radius:2px;overflow:hidden;cursor:pointer;margin-bottom:4px;position:relative}
+.progress-fill{height:100%;background:var(--green);border-radius:2px;width:0%;transition:width .5s linear}
+.progress-fill.amber{background:var(--amber)}
+.progress-times{display:flex;justify-content:space-between;font-size:10px;font-family:'DM Mono',monospace;color:var(--muted)}
+
+.status-pill{display:inline-flex;align-items:center;gap:5px;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:3px 9px;font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);margin-bottom:10px}
+.sp-dot{width:5px;height:5px;border-radius:50%;background:var(--muted)}
+.sp-dot.ready{background:var(--green)}
+.sp-dot.loading{background:var(--amber);animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+.ctrl-row{display:flex;gap:6px;margin-bottom:10px}
+.ctrl-btn{flex:1;background:var(--card);border:1px solid var(--border);color:var(--text);padding:7px 4px;border-radius:6px;cursor:pointer;font-family:'DM Mono',monospace;font-size:11px;transition:all .15s;text-align:center}
+.ctrl-btn:hover:not(:disabled){border-color:var(--green);color:var(--green)}
+.ctrl-btn:disabled{opacity:.3;cursor:not-allowed}
+.ctrl-btn.play-btn{background:var(--green);color:#000;border-color:var(--green);font-family:'Syne',sans-serif;font-weight:700;font-size:13px}
+.ctrl-btn.play-btn:hover:not(:disabled){background:#1ed760}
+.ctrl-btn.cue-btn{border-color:var(--amber);color:var(--amber)}
+.ctrl-btn.cue-btn:hover:not(:disabled){background:#2a2000}
+
+.vol-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.vol-label{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);white-space:nowrap}
+input[type=range]{padding:0;height:4px;accent-color:var(--green);cursor:pointer;flex:1}
+
+/* ── Keyboard shortcut panel ── */
+.kb-panel{background:var(--card);border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-bottom:10px}
+.kb-header{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;cursor:pointer;font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.kb-header:hover{color:var(--text)}
+.kb-body{display:none;padding:4px 10px 8px;border-top:1px solid var(--border)}
+.kb-body.open{display:block}
+.kb-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border)}
+.kb-row:last-child{border-bottom:none}
+.kb-key{background:var(--card2);border:1px solid var(--border);border-radius:3px;padding:2px 7px;font-size:10px;font-family:'DM Mono',monospace;color:var(--text)}
+.kb-desc{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted)}
+
+/* jump select */
+.jump-wrap{margin-top:2px}
 </style>
 </head>
 <body>
 
 <!-- ══ SPLASH ══ -->
 <div id="splashScreen" class="screen active">
-  <div class="splash-wrap">
-    <div class="splash">
-      <div class="logo-ring">
-        <svg viewBox="0 0 24 24"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
-      </div>
-      <h1>Cue Player</h1>
-      <p class="splash-sub">queue spotify tracks with custom start times. requires spotify premium.</p>
-      <div class="features">
-        <div class="feat"><div class="dot"></div><span>paste any spotify track url</span></div>
-        <div class="feat"><div class="dot"></div><span>set exact cue start times (mm:ss)</span></div>
-        <div class="feat"><div class="dot"></div><span>real seeking via web playback sdk</span></div>
-        <div class="feat"><div class="dot"></div><span>live progress bar + volume control</span></div>
-      </div>
-      <button class="btn-spotify" onclick="startLogin()">
-        <svg viewBox="0 0 24 24"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
-        connect with spotify
-      </button>
-      <p class="splash-note">you'll be redirected to spotify to log in, then brought back here automatically.</p>
+  <div class="splash">
+    <div class="logo-ring">
+      <svg viewBox="0 0 24 24"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
     </div>
+    <h1>Cue Player</h1>
+    <p class="splash-sub">precise spotify playback for live performance. requires spotify premium.</p>
+    <div class="features">
+      <div class="feat"><div class="dot"></div><span>cue tracks to exact timestamps</span></div>
+      <div class="feat"><div class="dot"></div><span>pre-load without playing</span></div>
+      <div class="feat"><div class="dot"></div><span>drag-and-drop queue reorder</span></div>
+      <div class="feat"><div class="dot"></div><span>save, load &amp; export playlists</span></div>
+      <div class="feat"><div class="dot"></div><span>keyboard shortcuts with 3-mode arming</span></div>
+    </div>
+    <button class="btn-spotify" onclick="startLogin()">
+      <svg viewBox="0 0 24 24"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+      connect with spotify
+    </button>
+    <p class="splash-note">you'll be redirected to spotify to log in, then brought back here automatically.</p>
   </div>
 </div>
 
@@ -170,12 +246,13 @@
 <div id="loadingScreen" class="screen">
   <div class="loading-wrap">
     <div class="spinner"></div>
-    <div class="loading-text" id="loadingText">connecting to spotify…</div>
+    <div class="loading-text" id="loadingText">connecting…</div>
   </div>
 </div>
 
 <!-- ══ APP ══ -->
 <div id="appScreen" class="screen">
+
   <div class="user-bar">
     <div class="avatar" id="uAvatar">SP</div>
     <div style="flex:1">
@@ -184,21 +261,22 @@
     </div>
     <button class="logout-btn" onclick="logout()">disconnect</button>
   </div>
-
   <div id="warnBar" class="warn-bar" style="display:none">
     <svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
     <div class="warn-body" id="warnText"></div>
   </div>
 
   <div class="app-grid">
-    <!-- LEFT: queue -->
+
+    <!-- ══ LEFT PANEL ══ -->
     <div class="panel panel-left">
       <h2>Cue Player</h2>
-      <div class="psub">// queue with start times</div>
+      <div class="psub">// v2.0 · queue with start times</div>
 
+      <!-- Add track form -->
       <div class="field">
         <label>Spotify Track URL</label>
-        <input type="text" id="urlInput" placeholder="https://open.spotify.com/track/..." />
+        <input type="text" id="urlInput" placeholder="https://open.spotify.com/track/…" />
       </div>
       <div class="two-col">
         <div class="field">
@@ -207,54 +285,95 @@
         </div>
         <div class="field">
           <label>Label (optional)</label>
-          <input type="text" id="labelInput" placeholder="Verse 1..." />
+          <input type="text" id="labelInput" placeholder="Verse 1…" />
         </div>
       </div>
       <div class="err" id="errMsg"></div>
       <button class="add-btn" onclick="addTrack()">+ Add to Queue</button>
 
+      <!-- Queue header -->
       <div class="sec-hdr">
         <span>Queue</span>
-        <span class="badge-count" id="qCount">0 tracks</span>
+        <span class="badge" id="qCount">0 tracks</span>
+        <div class="sec-hdr-right">
+          <button class="icon-btn" id="reorderToggle" onclick="toggleReorderMode()" title="Toggle drag-and-drop reorder">⠿ reorder</button>
+        </div>
       </div>
-      <div class="queue" id="queueEl">
+      <div class="queue-wrap" id="queueEl">
         <div class="empty-q">no tracks yet<br>paste a spotify track url above</div>
       </div>
 
-      <!-- Playlist Manager -->
-      <div class="pl-section" style="margin-top:1.25rem">
-        <div class="pl-title">
+      <!-- Playlist manager -->
+      <div class="pl-box">
+        <div class="sec-hdr" style="margin:0 0 .6rem">
           <span>Saved Playlists</span>
-          <span class="badge-count" id="plCount">0 saved</span>
+          <span class="badge" id="plCount">0 saved</span>
         </div>
+
         <div class="pl-save-row">
-          <input type="text" id="plNameInput" placeholder="playlist name…" />
-          <button class="pl-save-btn" onclick="savePlaylist()" id="plSaveBtn">save queue</button>
+          <input type="text" id="plNameInput" placeholder="playlist name…" onkeydown="if(event.key==='Enter')savePlaylist()" />
+          <button class="micro-btn mb-green" onclick="savePlaylist()">save queue</button>
+        </div>
+        <div class="pl-confirm" id="plConfirm">
+          <span id="plConfirmMsg"></span>
+          <div class="pl-confirm-btns">
+            <button class="micro-btn mb-warn" onclick="confirmOverwrite()">overwrite</button>
+            <button class="micro-btn mb-ghost" onclick="cancelOverwrite()">cancel</button>
+          </div>
         </div>
         <div class="pl-toast" id="plToast"></div>
+
         <div class="pl-list" id="plList">
           <div class="pl-empty">no saved playlists yet</div>
+        </div>
+
+        <!-- Import conflict UI -->
+        <div id="importConflictWrap" style="display:none;margin-top:8px"></div>
+
+        <div class="pl-io-row">
+          <button class="micro-btn mb-ghost" onclick="exportPlaylists()">⬇ export json</button>
+          <button class="micro-btn mb-ghost" onclick="document.getElementById('importFileInput').click()">⬆ import json</button>
+          <input type="file" id="importFileInput" accept=".json" onchange="importPlaylists(event)" />
         </div>
       </div>
     </div>
 
-    <!-- RIGHT: player -->
-    <div class="panel">
-      <h2>Now Playing</h2>
-      <div class="psub">// trigger tracks one by one</div>
+    <!-- ══ RIGHT PANEL ══ -->
+    <div class="panel" id="playerPanel">
 
+      <!-- Panel header with hotkey toggle -->
+      <div class="player-panel-hdr">
+        <div>
+          <h2>Now Playing</h2>
+          <div class="psub" style="margin-bottom:0">// trigger tracks one by one</div>
+        </div>
+        <button class="hotkey-toggle hk-auto" id="hotkeyToggle" onclick="cycleHotkeyMode()" title="Cycle hotkey mode: Auto → Armed → Disarmed">
+          <div class="hk-dot"></div>
+          <span id="hotkeyLabel">keys auto</span>
+        </button>
+      </div>
+
+      <div style="height:10px"></div>
+
+      <!-- Player status -->
       <div class="status-pill">
-        <div class="status-dot loading" id="statusDot"></div>
+        <div class="sp-dot loading" id="statusDot"></div>
         <span id="statusText">initializing player…</span>
       </div>
 
-      <div class="now-bar">
-        <div class="now-label">current track</div>
+      <!-- Now Playing display -->
+      <div class="now-panel" id="nowPanel" onclick="armAuto()">
+        <div class="now-label">
+          <span>current track</span>
+          <span class="now-state-badge nsb-idle" id="nowStateBadge">idle</span>
+        </div>
         <div class="now-title" id="nowTitle">— nothing loaded —</div>
         <div class="now-artist" id="nowArtist"></div>
         <div class="now-cue" id="nowCue"></div>
+        <div class="now-focus-hint" id="nowFocusHint">click to arm hotkeys</div>
       </div>
 
+      <!-- Progress bar -->
       <div class="progress-wrap">
         <div class="progress-bar" onclick="seekFromBar(event)">
           <div class="progress-fill" id="progressFill"></div>
@@ -265,505 +384,800 @@
         </div>
       </div>
 
+      <!-- Controls: prev / cue / play-pause / next -->
       <div class="ctrl-row">
-        <button class="ctrl-btn" id="prevBtn" onclick="prevTrack()" disabled>← prev</button>
-        <button class="ctrl-btn primary" id="playPauseBtn" onclick="togglePlay()" disabled>▶ play</button>
-        <button class="ctrl-btn" id="nextBtn" onclick="nextTrack()" disabled>next →</button>
+        <button class="ctrl-btn" id="prevBtn" onclick="prevTrack()" disabled title="Previous (←)">← prev</button>
+        <button class="ctrl-btn cue-btn" id="cueBtn" onclick="cueSelected()" disabled title="Cue without playing (C)">⏸ cue</button>
+        <button class="ctrl-btn play-btn" id="playPauseBtn" onclick="handlePlayPause()" disabled title="Play / Pause (Space)">▶ play</button>
+        <button class="ctrl-btn" id="nextBtn" onclick="nextTrack()" disabled title="Next (→)">next →</button>
       </div>
 
-      <div class="volume-row">
-        <span class="vol-label">volume</span>
-        <input type="range" id="volSlider" min="0" max="100" value="80" oninput="setVolume(this.value)" style="flex:1" />
-        <span class="vol-label" id="volVal">80%</span>
+      <!-- Volume -->
+      <div class="vol-row">
+        <span class="vol-label">vol</span>
+        <input type="range" id="volSlider" min="0" max="100" value="80" oninput="setVolume(this.value)" />
+        <span class="vol-label" id="volVal" style="min-width:28px;text-align:right">80%</span>
       </div>
 
-      <div>
-        <div class="sec-hdr"><span>Jump to track</span></div>
+      <!-- Jump dropdown -->
+      <div class="jump-wrap">
+        <div class="sec-hdr" style="margin-top:0"><span>Jump to track</span></div>
         <select id="jumpSel" onchange="jumpTo(this.value)">
           <option value="">— select —</option>
         </select>
       </div>
+
+      <!-- Keyboard shortcuts reference -->
+      <div class="kb-panel" style="margin-top:10px">
+        <div class="kb-header" onclick="toggleKbPanel()">
+          <span>⌨ keyboard shortcuts</span>
+          <span id="kbChevron">▸</span>
+        </div>
+        <div class="kb-body" id="kbBody">
+          <div class="kb-row"><span class="kb-key">Space</span><span class="kb-desc">play / pause</span></div>
+          <div class="kb-row"><span class="kb-key">C</span><span class="kb-desc">cue selected (pre-load)</span></div>
+          <div class="kb-row"><span class="kb-key">→</span><span class="kb-desc">next track</span></div>
+          <div class="kb-row"><span class="kb-key">←</span><span class="kb-desc">previous track</span></div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
 
 <script>
-/* ─────────────────────────────────────────
-   CONFIG — update these if you fork
-───────────────────────────────────────── */
-const CLIENT_ID = '3e1c36fd35a3425194ed2673a43a8b43';
+/* ═══════════════════════════════════════════
+   CONFIG
+═══════════════════════════════════════════ */
+const CLIENT_ID   = '3e1c36fd35a3425194ed2673a43a8b43';
 const REDIRECT_URI = 'https://j-toddbaker.github.io/cue-player/';
 const SCOPES = [
-  'streaming',
-  'user-read-email',
-  'user-read-private',
-  'user-read-playback-state',
-  'user-modify-playback-state'
+  'streaming','user-read-email','user-read-private',
+  'user-read-playback-state','user-modify-playback-state'
 ].join(' ');
 
-/* ─────────────────────────────────────────
-   State
-───────────────────────────────────────── */
-let queue = [], currentIdx = -1;
-let player = null, deviceId = null;
-let accessToken = null;
-let currentDuration = 0, progressInterval = null;
-let isPlaying = false;
+/* ═══════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════ */
+let queue        = [];
+let currentIdx   = -1;
+let playerState  = 'idle'; // idle | cued | playing | paused
+let reorderMode  = false;
+let hotkeyMode   = 'auto'; // auto | armed | disarmed
+let autoArmed    = false;  // for 'auto' mode
+let player       = null;
+let deviceId     = null;
+let accessToken  = null;
+let currentDurationMs = 0;
+let progressInterval  = null;
+let dragSrcIdx   = null;
+let pendingOverwriteName = null;
+let toastTimer   = null;
 
-/* ─────────────────────────────────────────
-   PKCE helpers
-───────────────────────────────────────── */
-function randomString(len) {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
-  return Array.from(crypto.getRandomValues(new Uint8Array(len))).map(b => chars[b % chars.length]).join('');
+/* ═══════════════════════════════════════════
+   PKCE AUTH
+═══════════════════════════════════════════ */
+function rndStr(n){
+  const c='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
+  return Array.from(crypto.getRandomValues(new Uint8Array(n))).map(b=>c[b%c.length]).join('');
 }
-
-async function sha256(plain) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(plain);
-  return await crypto.subtle.digest('SHA-256', data);
+async function sha256(s){
+  return crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));
 }
-
-function base64urlEncode(buffer) {
-  return btoa(String.fromCharCode(...new Uint8Array(buffer)))
-    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+function b64url(buf){
+  return btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
 }
-
-async function startLogin() {
-  const verifier = randomString(64);
-  const hashed = await sha256(verifier);
-  const challenge = base64urlEncode(hashed);
-  sessionStorage.setItem('pkce_verifier', verifier);
-
-  const params = new URLSearchParams({
-    client_id: CLIENT_ID,
-    response_type: 'code',
-    redirect_uri: REDIRECT_URI,
-    code_challenge_method: 'S256',
-    code_challenge: challenge,
-    scope: SCOPES,
+async function startLogin(){
+  const v=rndStr(64); sessionStorage.setItem('pkce_v',v);
+  const ch=b64url(await sha256(v));
+  const p=new URLSearchParams({client_id:CLIENT_ID,response_type:'code',redirect_uri:REDIRECT_URI,
+    code_challenge_method:'S256',code_challenge:ch,scope:SCOPES});
+  window.location='https://accounts.spotify.com/authorize?'+p;
+}
+async function exchangeCode(code){
+  const v=sessionStorage.getItem('pkce_v');
+  const res=await fetch('https://accounts.spotify.com/api/token',{
+    method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:new URLSearchParams({client_id:CLIENT_ID,grant_type:'authorization_code',
+      code,redirect_uri:REDIRECT_URI,code_verifier:v}).toString()
   });
-  window.location = 'https://accounts.spotify.com/authorize?' + params.toString();
-}
-
-async function exchangeCode(code) {
-  const verifier = sessionStorage.getItem('pkce_verifier');
-  const body = new URLSearchParams({
-    client_id: CLIENT_ID,
-    grant_type: 'authorization_code',
-    code,
-    redirect_uri: REDIRECT_URI,
-    code_verifier: verifier,
-  });
-  const res = await fetch('https://accounts.spotify.com/api/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: body.toString(),
-  });
-  const data = await res.json();
-  if (data.access_token) {
-    accessToken = data.access_token;
-    sessionStorage.setItem('sp_token', accessToken);
-    sessionStorage.setItem('sp_token_exp', Date.now() + (data.expires_in - 60) * 1000);
-    // Clean URL
-    window.history.replaceState({}, '', window.location.pathname);
+  const d=await res.json();
+  if(d.access_token){
+    accessToken=d.access_token;
+    sessionStorage.setItem('sp_token',accessToken);
+    sessionStorage.setItem('sp_token_exp',Date.now()+(d.expires_in-60)*1000);
+    window.history.replaceState({},'',window.location.pathname);
     return true;
   }
   return false;
 }
-
-async function refreshIfNeeded() {
-  const exp = parseInt(sessionStorage.getItem('sp_token_exp') || '0');
-  if (Date.now() > exp) {
-    sessionStorage.clear();
-    return false;
-  }
-  accessToken = sessionStorage.getItem('sp_token');
+async function refreshIfNeeded(){
+  if(Date.now()>parseInt(sessionStorage.getItem('sp_token_exp')||'0')){sessionStorage.clear();return false;}
+  accessToken=sessionStorage.getItem('sp_token');
   return !!accessToken;
 }
 
-/* ─────────────────────────────────────────
-   Spotify API calls
-───────────────────────────────────────── */
-async function apiGet(path) {
-  const res = await fetch('https://api.spotify.com/v1' + path, {
-    headers: { Authorization: 'Bearer ' + accessToken }
-  });
-  return res.ok ? res.json() : null;
+/* ═══════════════════════════════════════════
+   SPOTIFY API
+═══════════════════════════════════════════ */
+async function apiGet(path){
+  const r=await fetch('https://api.spotify.com/v1'+path,{headers:{Authorization:'Bearer '+accessToken}});
+  return r.ok?r.json():null;
+}
+async function apiPut(path,body){
+  await fetch('https://api.spotify.com/v1'+path,{method:'PUT',
+    headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},
+    body:body?JSON.stringify(body):undefined});
+}
+async function fetchTrackMeta(id){
+  const d=await apiGet('/tracks/'+id);
+  return d?{name:d.name,artist:d.artists.map(a=>a.name).join(', '),durationMs:d.duration_ms}:null;
 }
 
-async function apiPut(path, body) {
-  await fetch('https://api.spotify.com/v1' + path, {
-    method: 'PUT',
-    headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
-    body: body ? JSON.stringify(body) : undefined
-  });
-}
-
-async function getUserProfile() {
-  return await apiGet('/me');
-}
-
-/* ─────────────────────────────────────────
-   Web Playback SDK
-───────────────────────────────────────── */
-function loadSDK() {
-  return new Promise((resolve) => {
-    window.onSpotifyWebPlaybackSDKReady = resolve;
-    const s = document.createElement('script');
-    s.src = 'https://sdk.scdn.co/spotify-player.js';
+/* ═══════════════════════════════════════════
+   WEB PLAYBACK SDK
+═══════════════════════════════════════════ */
+function loadSDK(){
+  return new Promise(res=>{
+    window.onSpotifyWebPlaybackSDKReady=res;
+    const s=document.createElement('script');
+    s.src='https://sdk.scdn.co/spotify-player.js';
     document.head.appendChild(s);
   });
 }
-
-async function initPlayer() {
+async function initPlayer(){
   await loadSDK();
-  player = new Spotify.Player({
-    name: 'Cue Player',
-    getOAuthToken: cb => cb(accessToken),
-    volume: 0.8
+  player=new Spotify.Player({name:'Cue Player',getOAuthToken:cb=>cb(accessToken),volume:0.8});
+  player.addListener('ready',({device_id})=>{
+    deviceId=device_id; setStatus('ready','player ready'); updateControls();
   });
-
-  player.addListener('ready', ({ device_id }) => {
-    deviceId = device_id;
-    setStatus('ready', 'player ready');
-    updateControls();
+  player.addListener('not_ready',()=>{
+    deviceId=null; setStatus('loading','player offline'); updateControls();
   });
-
-  player.addListener('not_ready', () => {
-    setStatus('loading', 'player offline');
-    deviceId = null;
-  });
-
-  player.addListener('player_state_changed', (state) => {
-    if (!state) return;
-    isPlaying = !state.paused;
-    document.getElementById('playPauseBtn').textContent = isPlaying ? '⏸ pause' : '▶ play';
-    currentDuration = state.duration;
-    updateProgress(state.position, state.duration);
-
-    if (progressInterval) clearInterval(progressInterval);
-    if (!state.paused) {
-      let pos = state.position;
-      progressInterval = setInterval(() => {
-        pos += 500;
-        updateProgress(pos, state.duration);
-      }, 500);
+  player.addListener('player_state_changed',state=>{
+    if(!state)return;
+    const wasPlaying = playerState==='playing';
+    if(!state.paused){
+      setPlayerState('playing');
+    } else if(playerState!=='cued'){
+      setPlayerState('paused');
     }
-
-    // Track name from SDK state
-    if (state.track_window?.current_track) {
-      const tr = state.track_window.current_track;
-      document.getElementById('nowTitle').textContent = tr.name;
-      document.getElementById('nowArtist').textContent = tr.artists.map(a => a.name).join(', ');
+    currentDurationMs=state.duration;
+    updateProgress(state.position,state.duration);
+    if(progressInterval)clearInterval(progressInterval);
+    if(!state.paused){
+      let pos=state.position;
+      progressInterval=setInterval(()=>{pos+=500;updateProgress(pos,state.duration);},500);
+    }
+    if(state.track_window?.current_track){
+      const tr=state.track_window.current_track;
+      document.getElementById('nowTitle').textContent=tr.name;
+      document.getElementById('nowArtist').textContent=tr.artists.map(a=>a.name).join(', ');
     }
   });
-
-  player.addListener('initialization_error', ({ message }) => showWarn('Player init error: ' + message));
-  player.addListener('authentication_error', ({ message }) => showWarn('Auth error: ' + message));
-  player.addListener('account_error', () => showWarn('Spotify Premium is required for the Web Playback SDK.'));
-
+  player.addListener('initialization_error',({message})=>showWarn('Init error: '+message));
+  player.addListener('authentication_error',({message})=>showWarn('Auth error: '+message));
+  player.addListener('account_error',()=>showWarn('Spotify Premium is required for Web Playback SDK.'));
   player.connect();
 }
 
-/* ─────────────────────────────────────────
-   Progress bar
-───────────────────────────────────────── */
-function updateProgress(pos, dur) {
-  const pct = dur > 0 ? (pos / dur) * 100 : 0;
-  document.getElementById('progressFill').style.width = pct + '%';
-  document.getElementById('timeNow').textContent = formatTime(Math.floor(pos / 1000));
-  document.getElementById('timeDur').textContent = formatTime(Math.floor(dur / 1000));
+/* ═══════════════════════════════════════════
+   PLAYBACK CONTROLS
+═══════════════════════════════════════════ */
+function setPlayerState(s){
+  playerState=s;
+  const badge=document.getElementById('nowStateBadge');
+  const fill=document.getElementById('progressFill');
+  const nowPanel=document.getElementById('nowPanel');
+  const btn=document.getElementById('playPauseBtn');
+  badge.className='now-state-badge';
+  nowPanel.classList.remove('cued-state');
+  fill.classList.remove('amber');
+  if(s==='playing'){badge.classList.add('nsb-playing');badge.textContent='playing';btn.textContent='⏸ pause';}
+  else if(s==='paused'){badge.classList.add('nsb-paused');badge.textContent='paused';btn.textContent='▶ play';}
+  else if(s==='cued'){badge.classList.add('nsb-cued');badge.textContent='cued';btn.textContent='▶ play';nowPanel.classList.add('cued-state');fill.classList.add('amber');}
+  else{badge.classList.add('nsb-idle');badge.textContent='idle';btn.textContent='▶ play';}
 }
 
-function seekFromBar(e) {
-  if (!player || !currentDuration) return;
-  const bar = e.currentTarget;
-  const pct = e.offsetX / bar.offsetWidth;
-  const ms = Math.floor(pct * currentDuration);
-  player.seek(ms);
-}
+async function cueTrack(i){
+  // Pre-load without playing
+  if(!deviceId){showWarn('Player not ready — wait a moment.');return;}
+  currentIdx=i;
+  const t=queue[i];
+  document.getElementById('nowTitle').textContent=t.label+(t.name?' — '+t.name:'');
+  document.getElementById('nowArtist').textContent=t.artist||'';
+  document.getElementById('nowCue').textContent='cue point: '+t.displayStart+(t.startSec?' ('+t.startSec+'s)':'');
 
-/* ─────────────────────────────────────────
-   Playback controls
-───────────────────────────────────────── */
-async function loadTrack(i) {
-  if (!deviceId) { showWarn('Player not ready yet — wait a moment and try again.'); return; }
-  currentIdx = i;
-  const t = queue[i];
-
-  document.getElementById('nowTitle').textContent = t.label;
-  document.getElementById('nowArtist').textContent = '';
-  document.getElementById('nowCue').textContent = `cue point: ${t.displayStart}${t.startSec ? ` (${t.startSec}s)` : ''}`;
-
-  const uri = `spotify:track:${t.id}`;
-  // Start playback on our SDK device
-  await apiPut(`/me/player/play?device_id=${deviceId}`, {
-    uris: [uri],
-    position_ms: t.startSec * 1000
+  // Transfer playback to our device then immediately pause at cue point
+  await apiPut('/me/player/play?device_id='+deviceId,{
+    uris:['spotify:track:'+t.id], position_ms:t.startSec*1000
   });
+  // pause after a short buffer so it's pre-loaded
+  setTimeout(async()=>{
+    await player.pause();
+    setPlayerState('cued');
+    updateProgress(t.startSec*1000, t.durationMs||0);
+  },600);
 
-  isPlaying = true;
-  document.getElementById('playPauseBtn').textContent = '⏸ pause';
+  renderQueue(); updateControls();
+  armAuto(); hideWarn();
+}
+
+async function playTrack(i){
+  // Play from cue point (used when firing directly from card or nothing loaded)
+  if(!deviceId){showWarn('Player not ready — wait a moment.');return;}
+  currentIdx=i;
+  const t=queue[i];
+  document.getElementById('nowTitle').textContent=t.label+(t.name?' — '+t.name:'');
+  document.getElementById('nowArtist').textContent=t.artist||'';
+  document.getElementById('nowCue').textContent='cue point: '+t.displayStart+(t.startSec?' ('+t.startSec+'s)':'');
+
+  await apiPut('/me/player/play?device_id='+deviceId,{
+    uris:['spotify:track:'+t.id], position_ms:t.startSec*1000
+  });
+  setPlayerState('playing');
+  renderQueue(); updateControls();
+  armAuto(); hideWarn();
+}
+
+async function handlePlayPause(){
+  if(!player)return;
+  if(playerState==='cued'){
+    // Resume from cued position
+    await player.resume();
+    setPlayerState('playing');
+  } else if(playerState==='playing'){
+    await player.togglePlay();
+  } else if(playerState==='paused'){
+    await player.togglePlay();
+  } else {
+    // Nothing loaded — play from cue point
+    if(currentIdx>=0 && currentIdx<queue.length) await playTrack(currentIdx);
+  }
+}
+
+function cueSelected(){
+  if(currentIdx>=0&&currentIdx<queue.length) cueTrack(currentIdx);
+}
+function prevTrack(){ if(currentIdx>0) playTrack(currentIdx-1); }
+function nextTrack(){ if(currentIdx<queue.length-1) playTrack(currentIdx+1); }
+function jumpTo(val){ if(val!=='') playTrack(parseInt(val)); }
+
+async function setVolume(v){
+  document.getElementById('volVal').textContent=v+'%';
+  if(player) await player.setVolume(v/100);
+}
+
+function updateProgress(pos,dur){
+  const pct=dur>0?(pos/dur)*100:0;
+  document.getElementById('progressFill').style.width=pct+'%';
+  document.getElementById('timeNow').textContent=fmtMs(pos);
+  document.getElementById('timeDur').textContent=fmtMs(dur);
+}
+function seekFromBar(e){
+  if(!player||!currentDurationMs)return;
+  const pct=e.offsetX/e.currentTarget.offsetWidth;
+  player.seek(Math.floor(pct*currentDurationMs));
+}
+
+/* ═══════════════════════════════════════════
+   QUEUE — ADD / EDIT / REMOVE / RENDER
+═══════════════════════════════════════════ */
+async function addTrack(){
+  const url=document.getElementById('urlInput').value.trim();
+  const start=document.getElementById('startInput').value.trim()||'0:00';
+  const label=document.getElementById('labelInput').value.trim();
+  const err=document.getElementById('errMsg');
+  err.textContent='';
+  if(!url){err.textContent='paste a spotify track url first';return;}
+  const id=extractId(url);
+  if(!id){err.textContent='must be a spotify track url (open.spotify.com/track/…)';return;}
+  const startSec=parseTime(start);
+  const track={url,id,startSec,displayStart:fmtSec(startSec),
+    label:label||'track #'+(queue.length+1),name:'',artist:'',durationMs:0,editing:false};
+  queue.push(track);
+  document.getElementById('urlInput').value='';
+  document.getElementById('startInput').value='0:00';
+  document.getElementById('labelInput').value='';
+  if(currentIdx===-1)currentIdx=0;
+  renderQueue(); updateControls();
+  // fetch meta async
+  fetchTrackMeta(id).then(meta=>{
+    if(!meta)return;
+    const idx=queue.findIndex(t=>t.id===id&&t.name==='');
+    if(idx<0)return;
+    queue[idx].name=meta.name; queue[idx].artist=meta.artist; queue[idx].durationMs=meta.durationMs;
+    if(startSec>0&&meta.durationMs>0&&startSec*1000>meta.durationMs){
+      err.textContent='⚠ cue point is past the end of the track ('+fmtMs(meta.durationMs)+')';
+    }
+    renderQueue();
+  });
+}
+
+function startEdit(i){
+  queue[i].editing=true; renderQueue();
+}
+function cancelEdit(i){
+  queue[i].editing=false; renderQueue();
+}
+function saveEdit(i){
+  const url=document.getElementById('edit-url-'+i).value.trim();
+  const start=document.getElementById('edit-start-'+i).value.trim()||'0:00';
+  const label=document.getElementById('edit-label-'+i).value.trim();
+  const err=document.getElementById('edit-err-'+i);
+  if(url){
+    const id=extractId(url);
+    if(!id){err.textContent='invalid spotify track url'; return;}
+    queue[i].url=url; queue[i].id=id; queue[i].name=''; queue[i].artist=''; queue[i].durationMs=0;
+    fetchTrackMeta(id).then(meta=>{
+      if(!meta)return;
+      queue[i].name=meta.name; queue[i].artist=meta.artist; queue[i].durationMs=meta.durationMs;
+      renderQueue();
+    });
+  }
+  const startSec=parseTime(start);
+  queue[i].startSec=startSec; queue[i].displayStart=fmtSec(startSec);
+  if(label) queue[i].label=label;
+  queue[i].editing=false;
   renderQueue();
-  updateControls();
-  hideWarn();
 }
 
-async function togglePlay() {
-  if (!player) return;
-  await player.togglePlay();
-}
-
-function prevTrack() { if (currentIdx > 0) loadTrack(currentIdx - 1); }
-function nextTrack() { if (currentIdx < queue.length - 1) loadTrack(currentIdx + 1); }
-function jumpTo(val) { if (val !== '') loadTrack(parseInt(val)); }
-
-async function setVolume(val) {
-  document.getElementById('volVal').textContent = val + '%';
-  if (player) await player.setVolume(val / 100);
-}
-
-/* ─────────────────────────────────────────
-   Queue
-───────────────────────────────────────── */
-function parseTime(t) {
-  const p = t.trim().split(':');
-  return p.length === 2 ? (parseInt(p[0])||0)*60+(parseInt(p[1])||0) : (parseInt(p[0])||0);
-}
-function formatTime(s) {
-  return `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
-}
-function extractTrackId(url) {
-  const m = url.match(/spotify\.com\/track\/([a-zA-Z0-9]+)/);
-  return m ? m[1] : null;
-}
-
-function addTrack() {
-  const url = document.getElementById('urlInput').value.trim();
-  const start = document.getElementById('startInput').value.trim() || '0:00';
-  const label = document.getElementById('labelInput').value.trim();
-  const err = document.getElementById('errMsg');
-  err.textContent = '';
-
-  if (!url) { err.textContent = 'paste a spotify track url first'; return; }
-  const id = extractTrackId(url);
-  if (!id) { err.textContent = 'must be a spotify track url (not album/playlist)'; return; }
-
-  const startSec = parseTime(start);
-  queue.push({ url, id, startSec, displayStart: formatTime(startSec), label: label || `track #${queue.length + 1}` });
-  document.getElementById('urlInput').value = '';
-  document.getElementById('startInput').value = '0:00';
-  document.getElementById('labelInput').value = '';
-  if (currentIdx === -1) currentIdx = 0;
+function removeTrack(i){
+  queue.splice(i,1);
+  if(currentIdx>=queue.length) currentIdx=Math.max(0,queue.length-1);
+  if(!queue.length) currentIdx=-1;
   renderQueue(); updateControls();
 }
 
-function renderQueue() {
-  const el = document.getElementById('queueEl');
-  const js = document.getElementById('jumpSel');
-  document.getElementById('qCount').textContent = `${queue.length} track${queue.length !== 1 ? 's' : ''}`;
-  js.innerHTML = '<option value="">— select —</option>';
-  queue.forEach((t, i) => {
-    const o = document.createElement('option');
-    o.value = i; o.textContent = `${i+1}. ${t.label} @ ${t.displayStart}`;
+function moveTrack(i,dir){
+  const j=i+dir;
+  if(j<0||j>=queue.length)return;
+  [queue[i],queue[j]]=[queue[j],queue[i]];
+  if(currentIdx===i) currentIdx=j;
+  else if(currentIdx===j) currentIdx=i;
+  renderQueue(); updateControls();
+}
+
+function renderQueue(){
+  const el=document.getElementById('queueEl');
+  const js=document.getElementById('jumpSel');
+  document.getElementById('qCount').textContent=queue.length+' track'+(queue.length!==1?'s':'');
+  js.innerHTML='<option value="">— select —</option>';
+  queue.forEach((t,i)=>{
+    const o=document.createElement('option');
+    o.value=i; o.textContent=(i+1)+'. '+t.label+' @ '+t.displayStart;
     js.appendChild(o);
   });
-  if (!queue.length) { el.innerHTML = '<div class="empty-q">no tracks yet<br>paste a spotify track url above</div>'; return; }
-  el.innerHTML = queue.map((t,i) => `
-    <div class="track-card${i===currentIdx?' active':''}">
-      <span class="tnum">${i+1}</span>
-      <div class="tinfo">
-        <div class="tlabel">${t.label}</div>
-        <div class="tcue">cue @ ${t.displayStart}</div>
-      </div>
-      <div class="tactions">
-        <button class="tbtn tbtn-play" onclick="loadTrack(${i})">play</button>
-        <button class="tbtn tbtn-del" onclick="removeTrack(${i})">remove</button>
-      </div>
-    </div>`).join('');
-}
-
-function removeTrack(i) {
-  queue.splice(i, 1);
-  if (currentIdx >= queue.length) currentIdx = Math.max(0, queue.length - 1);
-  if (!queue.length) currentIdx = -1;
-  renderQueue(); updateControls();
-}
-
-function updateControls() {
-  const has = queue.length > 0 && !!deviceId;
-  document.getElementById('playPauseBtn').disabled = !deviceId;
-  document.getElementById('prevBtn').disabled = currentIdx <= 0 || !deviceId;
-  document.getElementById('nextBtn').disabled = currentIdx >= queue.length-1 || !deviceId;
-}
-
-/* ─────────────────────────────────────────
-   Playlist persistence (localStorage)
-───────────────────────────────────────── */
-function getPlaylists() {
-  try { return JSON.parse(localStorage.getItem('cue_playlists') || '[]'); }
-  catch { return []; }
-}
-
-function savePlaylists(pls) {
-  localStorage.setItem('cue_playlists', JSON.stringify(pls));
-}
-
-function savePlaylist() {
-  const name = document.getElementById('plNameInput').value.trim();
-  if (!name) { showToast('enter a playlist name first', true); return; }
-  if (!queue.length) { showToast('queue is empty — add tracks first', true); return; }
-
-  const pls = getPlaylists();
-  const existing = pls.findIndex(p => p.name.toLowerCase() === name.toLowerCase());
-  const entry = { name, tracks: JSON.parse(JSON.stringify(queue)), savedAt: Date.now() };
-
-  if (existing >= 0) {
-    pls[existing] = entry; // overwrite
-    showToast(`"${name}" updated ✓`);
-  } else {
-    pls.unshift(entry);
-    showToast(`"${name}" saved ✓`);
-  }
-
-  savePlaylists(pls);
-  document.getElementById('plNameInput').value = '';
-  renderPlaylists();
-}
-
-function loadPlaylist(idx) {
-  const pls = getPlaylists();
-  const pl = pls[idx];
-  if (!pl) return;
-  queue = JSON.parse(JSON.stringify(pl.tracks));
-  currentIdx = queue.length > 0 ? 0 : -1;
-  renderQueue();
-  updateControls();
-  showToast(`"${pl.name}" loaded ✓`);
-}
-
-function deletePlaylist(idx) {
-  const pls = getPlaylists();
-  const name = pls[idx]?.name;
-  pls.splice(idx, 1);
-  savePlaylists(pls);
-  renderPlaylists();
-  showToast(`"${name}" deleted`);
-}
-
-function renderPlaylists() {
-  const pls = getPlaylists();
-  const el = document.getElementById('plList');
-  document.getElementById('plCount').textContent = `${pls.length} saved`;
-
-  if (!pls.length) {
-    el.innerHTML = '<div class="pl-empty">no saved playlists yet</div>';
+  if(!queue.length){
+    el.innerHTML='<div class="empty-q">no tracks yet<br>paste a spotify track url above</div>';
     return;
   }
+  const rm=reorderMode;
+  el.className='queue-wrap'+(rm?' reorder-mode':'');
+  el.innerHTML=queue.map((t,i)=>{
+    const isActive=i===currentIdx;
+    const isCued=isActive&&playerState==='cued';
+    const cardClass='track-card'+(isActive?(isCued?' cued':' active'):'');
+    if(t.editing){
+      return `<div class="${cardClass}" data-idx="${i}">
+        <div class="card-main">
+          <span class="tnum">${i+1}</span>
+          <div class="tinfo"><div class="tlabel" style="color:var(--muted2)">editing…</div></div>
+        </div>
+        <div class="card-edit">
+          <div class="field" style="margin:0">
+            <label>Spotify URL</label>
+            <input type="text" id="edit-url-${i}" value="${t.url}" placeholder="leave blank to keep current" />
+          </div>
+          <div class="edit-row">
+            <div class="field" style="margin:0">
+              <label>Start time</label>
+              <input type="text" id="edit-start-${i}" value="${t.displayStart}" />
+            </div>
+            <div class="field" style="margin:0">
+              <label>Label</label>
+              <input type="text" id="edit-label-${i}" value="${t.label}" />
+            </div>
+          </div>
+          <div class="err" id="edit-err-${i}"></div>
+          <div class="edit-actions">
+            <button class="micro-btn mb-ghost" onclick="cancelEdit(${i})">cancel</button>
+            <button class="micro-btn mb-green" onclick="saveEdit(${i})">save</button>
+          </div>
+        </div>
+      </div>`;
+    }
+    const dur=t.durationMs?'/ '+fmtMs(t.durationMs):'';
+    return `<div class="${cardClass}" data-idx="${i}"
+        draggable="${rm}"
+        ondragstart="onDragStart(event,${i})"
+        ondragover="onDragOver(event,${i})"
+        ondrop="onDrop(event,${i})"
+        ondragleave="onDragLeave(event)"
+        ondragend="onDragEnd(event)">
+      <div class="card-main">
+        <span class="drag-handle" title="drag to reorder">⠿</span>
+        <div class="card-arrows">
+          <button class="arr-btn" onclick="moveTrack(${i},-1)" ${i===0?'disabled':''}>▲</button>
+          <button class="arr-btn" onclick="moveTrack(${i},1)" ${i===queue.length-1?'disabled':''}>▼</button>
+        </div>
+        <span class="tnum">${i+1}</span>
+        <div class="tinfo">
+          <div class="tlabel">${t.label}${t.name?' <span style="color:var(--muted);font-size:10px">— '+t.name+'</span>':''}</div>
+          <div class="tmeta">
+            <span class="tcue">@ ${t.displayStart}</span>
+            ${dur?`<span class="tdur">${dur}</span>`:''}
+          </div>
+        </div>
+        <div class="tactions">
+          <button class="micro-btn mb-ghost" style="color:var(--amber);border-color:var(--amber)" onclick="cueTrack(${i})" title="Cue without playing">⏸</button>
+          <button class="micro-btn mb-dim" onclick="playTrack(${i})" title="Play from cue point">▶</button>
+          <button class="micro-btn mb-ghost" onclick="startEdit(${i})" title="Edit">✎</button>
+          <button class="micro-btn mb-danger" onclick="removeTrack(${i})" title="Remove">✕</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
 
-  el.innerHTML = pls.map((p, i) => `
+/* ═══════════════════════════════════════════
+   DRAG AND DROP
+═══════════════════════════════════════════ */
+function toggleReorderMode(){
+  reorderMode=!reorderMode;
+  document.getElementById('reorderToggle').classList.toggle('active',reorderMode);
+  renderQueue();
+}
+function onDragStart(e,i){ dragSrcIdx=i; e.currentTarget.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; }
+function onDragOver(e,i){ e.preventDefault(); if(i!==dragSrcIdx) e.currentTarget.classList.add('drag-over'); }
+function onDragLeave(e){ e.currentTarget.classList.remove('drag-over'); }
+function onDragEnd(e){ e.currentTarget.classList.remove('dragging'); document.querySelectorAll('.drag-over').forEach(el=>el.classList.remove('drag-over')); }
+function onDrop(e,i){
+  e.preventDefault(); e.currentTarget.classList.remove('drag-over');
+  if(dragSrcIdx===null||dragSrcIdx===i)return;
+  const moved=queue.splice(dragSrcIdx,1)[0];
+  queue.splice(i,0,moved);
+  if(currentIdx===dragSrcIdx) currentIdx=i;
+  else if(dragSrcIdx<currentIdx&&i>=currentIdx) currentIdx--;
+  else if(dragSrcIdx>currentIdx&&i<=currentIdx) currentIdx++;
+  dragSrcIdx=null; renderQueue(); updateControls();
+}
+
+/* ═══════════════════════════════════════════
+   PLAYLIST PERSISTENCE
+═══════════════════════════════════════════ */
+function getPls(){ try{return JSON.parse(localStorage.getItem('cue_pls')||'[]');}catch{return[];} }
+function setPls(p){ localStorage.setItem('cue_pls',JSON.stringify(p)); }
+
+function savePlaylist(){
+  const name=document.getElementById('plNameInput').value.trim();
+  if(!name){showToast('enter a name first',true);return;}
+  if(!queue.length){showToast('queue is empty',true);return;}
+  const pls=getPls();
+  const ex=pls.findIndex(p=>p.name.toLowerCase()===name.toLowerCase());
+  if(ex>=0){
+    // show confirmation
+    pendingOverwriteName=name;
+    document.getElementById('plConfirmMsg').textContent='"'+name+'" already exists. overwrite?';
+    document.getElementById('plConfirm').style.display='block';
+    return;
+  }
+  doSave(name);
+}
+function doSave(name){
+  const pls=getPls();
+  const ex=pls.findIndex(p=>p.name.toLowerCase()===name.toLowerCase());
+  const entry={name,tracks:JSON.parse(JSON.stringify(queue)),savedAt:Date.now()};
+  if(ex>=0) pls[ex]=entry; else pls.unshift(entry);
+  setPls(pls);
+  document.getElementById('plNameInput').value='';
+  document.getElementById('plConfirm').style.display='none';
+  pendingOverwriteName=null;
+  showToast('"'+name+'" saved ✓');
+  renderPlaylists();
+}
+function confirmOverwrite(){ if(pendingOverwriteName) doSave(pendingOverwriteName); }
+function cancelOverwrite(){ document.getElementById('plConfirm').style.display='none'; pendingOverwriteName=null; }
+
+function loadPlaylist(i){
+  const pls=getPls(); const pl=pls[i]; if(!pl)return;
+  queue=JSON.parse(JSON.stringify(pl.tracks));
+  currentIdx=queue.length>0?0:-1;
+  renderQueue(); updateControls(); showToast('"'+pl.name+'" loaded ✓');
+}
+
+function deletePlaylist(i){
+  const pls=getPls(); const name=pls[i]?.name;
+  pls.splice(i,1); setPls(pls); renderPlaylists(); showToast('"'+name+'" deleted');
+}
+
+function startRenamePlaylist(i){
+  const pls=getPls();
+  document.getElementById('pl-name-display-'+i).style.display='none';
+  const inp=document.getElementById('pl-name-input-'+i);
+  inp.style.display='block'; inp.focus(); inp.select();
+}
+function finishRenamePlaylist(i){
+  const pls=getPls();
+  const inp=document.getElementById('pl-name-input-'+i);
+  const newName=inp.value.trim();
+  if(newName&&newName!==pls[i].name){
+    pls[i].name=newName; setPls(pls);
+    showToast('renamed to "'+newName+'"');
+  }
+  renderPlaylists();
+}
+
+function renderPlaylists(){
+  const pls=getPls();
+  document.getElementById('plCount').textContent=pls.length+' saved';
+  const el=document.getElementById('plList');
+  if(!pls.length){el.innerHTML='<div class="pl-empty">no saved playlists yet</div>';return;}
+  el.innerHTML=pls.map((p,i)=>`
     <div class="pl-item">
-      <div class="pl-item-info">
-        <div class="pl-item-name">${p.name}</div>
-        <div class="pl-item-meta">${p.tracks.length} track${p.tracks.length !== 1 ? 's' : ''} · saved ${timeAgo(p.savedAt)}</div>
+      <div class="pl-item-top">
+        <div style="flex:1;min-width:0">
+          <span class="pl-name-display" id="pl-name-display-${i}" onclick="startRenamePlaylist(${i})" title="click to rename">${p.name}</span>
+          <input type="text" class="pl-name-input" id="pl-name-input-${i}" value="${p.name}"
+            style="display:none;flex:1"
+            onblur="finishRenamePlaylist(${i})"
+            onkeydown="if(event.key==='Enter')finishRenamePlaylist(${i});if(event.key==='Escape'){this.value=getPls()[${i}].name;renderPlaylists();}" />
+        </div>
+        <div class="pl-actions">
+          <button class="micro-btn mb-dim" onclick="loadPlaylist(${i})">load</button>
+          <button class="micro-btn mb-danger" onclick="deletePlaylist(${i})">✕</button>
+        </div>
       </div>
-      <div class="pl-item-btns">
-        <button class="pl-btn pl-btn-load" onclick="loadPlaylist(${i})">load</button>
-        <button class="pl-btn pl-btn-del" onclick="deletePlaylist(${i})">✕</button>
-      </div>
+      <div class="pl-meta">${p.tracks.length} track${p.tracks.length!==1?'s':''} · saved ${timeAgo(p.savedAt)}</div>
     </div>`).join('');
 }
 
-function timeAgo(ts) {
-  const diff = Date.now() - ts;
-  const mins = Math.floor(diff / 60000);
-  const hrs = Math.floor(diff / 3600000);
-  const days = Math.floor(diff / 86400000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins}m ago`;
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${days}d ago`;
+/* ═══════════════════════════════════════════
+   EXPORT / IMPORT
+═══════════════════════════════════════════ */
+function exportPlaylists(){
+  const pls=getPls();
+  if(!pls.length){showToast('nothing to export',true);return;}
+  const data={exported:new Date().toISOString(),version:2,playlists:pls};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='cue-playlists.json'; a.click();
+  showToast('exported '+pls.length+' playlist'+(pls.length!==1?'s':'')+' ✓');
 }
 
-let toastTimer = null;
-function showToast(msg, isErr = false) {
-  const el = document.getElementById('plToast');
-  el.textContent = msg;
-  el.style.color = isErr ? 'var(--danger)' : 'var(--green)';
-  if (toastTimer) clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { el.textContent = ''; }, 2500);
+async function importPlaylists(e){
+  const file=e.target.files[0]; if(!file)return;
+  e.target.value='';
+  try{
+    const text=await file.text();
+    const data=JSON.parse(text);
+    if(!data.playlists||!Array.isArray(data.playlists))throw new Error('invalid format');
+    const existing=getPls();
+    const conflicts=[]; const clean=[];
+    data.playlists.forEach(p=>{
+      const ex=existing.findIndex(e=>e.name.toLowerCase()===p.name.toLowerCase());
+      if(ex>=0) conflicts.push({imported:p,existingIdx:ex});
+      else clean.push(p);
+    });
+    // add non-conflicting ones
+    clean.forEach(p=>existing.unshift(p));
+    setPls(existing);
+    if(conflicts.length){
+      renderImportConflicts(conflicts,existing);
+    } else {
+      showToast('imported '+data.playlists.length+' playlist'+(data.playlists.length!==1?'s':'')+' ✓');
+    }
+    renderPlaylists();
+  }catch(err){
+    showToast('import failed: '+err.message,true);
+  }
 }
 
+function renderImportConflicts(conflicts,existing){
+  const wrap=document.getElementById('importConflictWrap');
+  wrap.style.display='block';
+  wrap.innerHTML=conflicts.map((c,i)=>`
+    <div class="pl-import-conflict">
+      conflict: "${c.imported.name}" already exists
+      <div style="display:flex;gap:6px;margin-top:5px">
+        <button class="micro-btn mb-warn" onclick="resolveConflict(${i},'replace')">replace</button>
+        <button class="micro-btn mb-ghost" onclick="resolveConflict(${i},'keep')">keep both</button>
+        <button class="micro-btn mb-ghost" onclick="resolveConflict(${i},'skip')">skip</button>
+      </div>
+    </div>`).join('');
+  wrap._conflicts=conflicts;
+}
 
-function show(id) {
-  ['splashScreen','loadingScreen','appScreen'].forEach(s => {
-    document.getElementById(s).classList.toggle('active', s === id);
+function resolveConflict(i,action){
+  const wrap=document.getElementById('importConflictWrap');
+  const conflicts=wrap._conflicts;
+  const c=conflicts[i];
+  const pls=getPls();
+  if(action==='replace'){
+    const ex=pls.findIndex(p=>p.name.toLowerCase()===c.imported.name.toLowerCase());
+    if(ex>=0) pls[ex]=c.imported; setPls(pls);
+    showToast('"'+c.imported.name+'" replaced ✓');
+  } else if(action==='keep'){
+    c.imported.name+=' (imported)'; pls.unshift(c.imported); setPls(pls);
+    showToast('kept both ✓');
+  } else {
+    showToast('"'+c.imported.name+'" skipped');
+  }
+  conflicts.splice(i,1);
+  if(!conflicts.length) wrap.style.display='none';
+  else renderImportConflicts(conflicts,pls);
+  renderPlaylists();
+}
+
+/* ═══════════════════════════════════════════
+   HOTKEY SYSTEM
+═══════════════════════════════════════════ */
+function cycleHotkeyMode(){
+  const modes=['auto','armed','disarmed'];
+  hotkeyMode=modes[(modes.indexOf(hotkeyMode)+1)%3];
+  updateHotkeyUI();
+}
+
+function updateHotkeyUI(){
+  const btn=document.getElementById('hotkeyToggle');
+  const lbl=document.getElementById('hotkeyLabel');
+  const hint=document.getElementById('nowFocusHint');
+  btn.className='hotkey-toggle';
+  if(hotkeyMode==='auto'){
+    btn.classList.add('hk-auto'); lbl.textContent='keys auto';
+    hint.style.display=autoArmed?'none':'block';
+  } else if(hotkeyMode==='armed'){
+    btn.classList.add('hk-armed'); lbl.textContent='keys armed';
+    hint.style.display='none';
+  } else {
+    btn.classList.add('hk-disarmed'); lbl.textContent='keys off';
+    hint.style.display='none';
+  }
+  const nowPanel=document.getElementById('nowPanel');
+  if(hotkeyMode==='armed') nowPanel.classList.add('focused');
+  else if(hotkeyMode==='disarmed') nowPanel.classList.remove('focused');
+  else nowPanel.classList.toggle('focused',autoArmed);
+}
+
+function armAuto(){
+  if(hotkeyMode!=='auto')return;
+  autoArmed=true;
+  document.getElementById('nowPanel').classList.add('focused');
+  document.getElementById('nowFocusHint').style.display='none';
+}
+
+function disarmAuto(){
+  if(hotkeyMode!=='auto')return;
+  autoArmed=false;
+  document.getElementById('nowPanel').classList.remove('focused');
+  document.getElementById('nowFocusHint').style.display='block';
+}
+
+function hotkeysActive(){
+  if(hotkeyMode==='armed') return true;
+  if(hotkeyMode==='auto') return autoArmed;
+  return false;
+}
+
+function isTypingContext(){
+  const el=document.activeElement;
+  if(!el)return false;
+  const tag=el.tagName.toLowerCase();
+  return tag==='input'||tag==='select'||tag==='textarea';
+}
+
+document.addEventListener('keydown',e=>{
+  // In armed mode we override even inputs (except suppress if disarmed)
+  if(hotkeyMode==='disarmed') return;
+  if(hotkeyMode==='auto'&&!autoArmed) return;
+  if(hotkeyMode==='armed'&&isTypingContext()) return; // protect typing even in armed mode
+  if(hotkeyMode==='auto'&&isTypingContext()){disarmAuto();return;}
+
+  if(e.key===' '||e.code==='Space'){
+    e.preventDefault(); handlePlayPause();
+  } else if(e.key==='ArrowRight'){
+    e.preventDefault(); nextTrack();
+  } else if(e.key==='ArrowLeft'){
+    e.preventDefault(); prevTrack();
+  } else if(e.key.toLowerCase()==='c'&&!e.metaKey&&!e.ctrlKey){
+    e.preventDefault(); cueSelected();
+  }
+});
+
+// Disarm auto when user clicks into a text input or playlist area
+document.addEventListener('focusin',e=>{
+  const tag=e.target.tagName.toLowerCase();
+  if(tag==='input'||tag==='select'||tag==='textarea') disarmAuto();
+});
+
+/* ═══════════════════════════════════════════
+   UI HELPERS
+═══════════════════════════════════════════ */
+function updateControls(){
+  const has=queue.length>0&&!!deviceId;
+  document.getElementById('playPauseBtn').disabled=!deviceId;
+  document.getElementById('cueBtn').disabled=!has;
+  document.getElementById('prevBtn').disabled=currentIdx<=0||!deviceId;
+  document.getElementById('nextBtn').disabled=currentIdx>=queue.length-1||!deviceId;
+}
+
+function setStatus(type,text){
+  document.getElementById('statusDot').className='sp-dot '+(type==='ready'?'ready':'loading');
+  document.getElementById('statusText').textContent=text;
+}
+
+function showWarn(msg){
+  document.getElementById('warnText').textContent=msg;
+  document.getElementById('warnBar').style.display='flex';
+}
+function hideWarn(){ document.getElementById('warnBar').style.display='none'; }
+
+function showToast(msg,isErr=false){
+  const el=document.getElementById('plToast');
+  el.textContent=msg; el.style.color=isErr?'var(--danger)':'var(--green)';
+  if(toastTimer)clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.textContent='',2500);
+}
+
+function toggleKbPanel(){
+  const b=document.getElementById('kbBody');
+  const open=b.classList.toggle('open');
+  document.getElementById('kbChevron').textContent=open?'▾':'▸';
+}
+
+function show(id){
+  ['splashScreen','loadingScreen','appScreen'].forEach(s=>{
+    document.getElementById(s).classList.toggle('active',s===id);
   });
 }
 
-function setStatus(type, text) {
-  const dot = document.getElementById('statusDot');
-  dot.className = 'status-dot ' + (type === 'ready' ? 'ready' : 'loading');
-  document.getElementById('statusText').textContent = text;
-}
-
-function showWarn(msg) {
-  const b = document.getElementById('warnBar');
-  document.getElementById('warnText').textContent = msg;
-  b.style.display = 'flex';
-}
-function hideWarn() { document.getElementById('warnBar').style.display = 'none'; }
-
-function logout() {
-  sessionStorage.clear();
-  if (player) { player.disconnect(); player = null; }
-  if (progressInterval) clearInterval(progressInterval);
-  queue = []; currentIdx = -1; accessToken = null; deviceId = null;
+function logout(){
+  sessionStorage.clear(); if(player){player.disconnect();player=null;}
+  if(progressInterval)clearInterval(progressInterval);
+  queue=[];currentIdx=-1;accessToken=null;deviceId=null;
+  playerState='idle';reorderMode=false;hotkeyMode='auto';autoArmed=false;
   show('splashScreen');
 }
 
-/* ─────────────────────────────────────────
-   Boot — check for OAuth callback or stored token
-───────────────────────────────────────── */
-async function boot() {
-  const params = new URLSearchParams(window.location.search);
-  const code = params.get('code');
-  const error = params.get('error');
+/* ═══════════════════════════════════════════
+   TIME HELPERS
+═══════════════════════════════════════════ */
+function parseTime(t){const p=t.trim().split(':');return p.length===2?(parseInt(p[0])||0)*60+(parseInt(p[1])||0):(parseInt(p[0])||0);}
+function fmtSec(s){return Math.floor(s/60)+':'+(s%60).toString().padStart(2,'0');}
+function fmtMs(ms){const s=Math.floor(ms/1000);return fmtSec(s);}
+function extractId(url){const m=url.match(/spotify\.com\/track\/([a-zA-Z0-9]+)/);return m?m[1]:null;}
+function timeAgo(ts){
+  const d=Date.now()-ts,m=Math.floor(d/60000),h=Math.floor(d/3600000),dy=Math.floor(d/86400000);
+  if(m<1)return'just now';if(m<60)return m+'m ago';if(h<24)return h+'h ago';return dy+'d ago';
+}
 
-  if (error) {
-    // User denied access
-    show('splashScreen');
-    return;
-  }
-
-  if (code) {
+/* ═══════════════════════════════════════════
+   BOOT
+═══════════════════════════════════════════ */
+async function boot(){
+  const params=new URLSearchParams(window.location.search);
+  const code=params.get('code'); const error=params.get('error');
+  if(error){show('splashScreen');return;}
+  if(code){
     show('loadingScreen');
-    document.getElementById('loadingText').textContent = 'exchanging token…';
-    const ok = await exchangeCode(code);
-    if (!ok) { show('splashScreen'); return; }
+    document.getElementById('loadingText').textContent='exchanging token…';
+    const ok=await exchangeCode(code);
+    if(!ok){show('splashScreen');return;}
   } else {
-    const ok = await refreshIfNeeded();
-    if (!ok) { show('splashScreen'); return; }
+    const ok=await refreshIfNeeded();
+    if(!ok){show('splashScreen');return;}
   }
-
-  // We have a token — load app
   show('loadingScreen');
-  document.getElementById('loadingText').textContent = 'loading your profile…';
-  const profile = await getUserProfile();
-  if (profile) {
-    document.getElementById('uName').textContent = profile.display_name || 'Spotify User';
-    document.getElementById('uAvatar').textContent = (profile.display_name || 'S').slice(0,2).toUpperCase();
-    if (profile.product !== 'premium') {
-      showWarn('Spotify Premium is required for real-time seeking and playback control.');
-    }
+  document.getElementById('loadingText').textContent='loading profile…';
+  const profile=await apiGet('/me');
+  if(profile){
+    document.getElementById('uName').textContent=profile.display_name||'Spotify User';
+    document.getElementById('uAvatar').textContent=(profile.display_name||'S').slice(0,2).toUpperCase();
+    if(profile.product!=='premium') showWarn('Spotify Premium required for playback control and seeking.');
   }
-
-  document.getElementById('loadingText').textContent = 'initializing playback…';
   show('appScreen');
-  renderQueue();
-  renderPlaylists();
-  updateControls();
+  renderQueue(); renderPlaylists(); updateControls(); updateHotkeyUI();
+  document.getElementById('loadingText').textContent='initializing playback…';
   await initPlayer();
 }
 

@@ -244,6 +244,21 @@ input[type=range]{padding:0;height:4px;accent-color:var(--green);cursor:pointer;
 .save-vol-btn.unsaved{background:#3a0000;color:var(--danger);border:1px solid var(--danger)}
 .save-vol-btn.unsaved:hover{background:var(--danger);color:#fff}
 .save-vol-btn.saved{background:var(--green-dim);color:var(--green);border:1px solid var(--green-mid);cursor:default}
+
+/* ── Fade toggle ── */
+.fade-toggle-row{display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding:8px 10px;background:var(--card);border:1px solid var(--border);border-radius:6px}
+.fade-toggle-label{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.fade-toggle-label span{display:block;font-size:9px;color:var(--muted);text-transform:none;letter-spacing:0;margin-top:2px;font-style:italic}
+.fade-toggle-right{display:flex;align-items:center;gap:8px}
+.fade-dur-select{background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:3px 6px;font-size:10px;font-family:'DM Mono',monospace;outline:none;width:auto}
+.fade-dur-select:disabled{opacity:.35}
+.toggle-switch{position:relative;width:36px;height:20px;flex-shrink:0}
+.toggle-switch input{opacity:0;width:0;height:0;position:absolute}
+.toggle-track{position:absolute;inset:0;background:var(--border);border-radius:20px;cursor:pointer;transition:background .2s}
+.toggle-switch input:checked+.toggle-track{background:var(--green)}
+.toggle-thumb{position:absolute;top:3px;left:3px;width:14px;height:14px;background:#fff;border-radius:50%;transition:transform .2s;pointer-events:none}
+.toggle-switch input:checked~.toggle-thumb{transform:translateX(16px)}
+.fading-indicator{font-size:10px;font-family:'DM Mono',monospace;color:var(--amber);margin-top:4px;min-height:14px;text-align:center}
 </style>
 </head>
 <body>
@@ -437,6 +452,28 @@ input[type=range]{padding:0;height:4px;accent-color:var(--green);cursor:pointer;
         </div>
       </div>
 
+      <!-- Fade on Cue toggle -->
+      <div class="fade-toggle-row">
+        <div class="fade-toggle-label">
+          Fade on Cue
+          <span>fades out current track before cueing next</span>
+        </div>
+        <div class="fade-toggle-right">
+          <select class="fade-dur-select" id="fadeDurSelect">
+            <option value="1000">1s</option>
+            <option value="2000">2s</option>
+            <option value="3000" selected>3s</option>
+            <option value="5000">5s</option>
+          </select>
+          <label class="toggle-switch">
+            <input type="checkbox" id="fadeToggle" checked onchange="onFadeToggleChange()" />
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+      </div>
+      <div class="fading-indicator" id="fadingIndicator"></div>
+
       <!-- Jump dropdown -->
       <div class="jump-wrap">
         <div class="sec-hdr" style="margin-top:0"><span>Jump to track</span></div>
@@ -491,6 +528,8 @@ let progressInterval  = null;
 let dragSrcIdx   = null;
 let pendingOverwriteName = null;
 let toastTimer   = null;
+let fadeInProgress = false;
+let fadeInterval = null;
 
 /* ═══════════════════════════════════════════
    PKCE AUTH
@@ -618,28 +657,84 @@ function setPlayerState(s){
 }
 
 async function cueTrack(i){
-  // Pre-load without playing
   if(!deviceId){showWarn('Player not ready — wait a moment.');return;}
-  currentIdx=i;
+
   const t=queue[i];
-  document.getElementById('nowTitle').textContent=t.label+(t.name?' — '+t.name:'');
-  document.getElementById('nowArtist').textContent=t.artist||'';
-  document.getElementById('nowCue').textContent='cue point: '+t.displayStart+(t.startSec?' ('+t.startSec+'s)':'');
+  const fadeEnabled=document.getElementById('fadeToggle').checked;
+  const fadeDuration=parseInt(document.getElementById('fadeDurSelect').value)||3000;
+  const isPlaying=playerState==='playing';
 
-  // Transfer playback to our device then immediately pause at cue point
-  await apiPut('/me/player/play?device_id='+deviceId,{
-    uris:['spotify:track:'+t.id], position_ms:t.startSec*1000
-  });
-  await applyTrackVolume(t);
-  // pause after a short buffer so it's pre-loaded
-  setTimeout(async()=>{
-    await player.pause();
-    setPlayerState('cued');
-    updateProgress(t.startSec*1000, t.durationMs||0);
-  },600);
+  // Cancel any in-progress fade
+  if(fadeInterval){clearInterval(fadeInterval);fadeInterval=null;}
+  fadeInProgress=false;
+  document.getElementById('fadingIndicator').textContent='';
 
-  renderQueue(); updateControls();
-  armAuto(); hideWarn();
+  const doLoad=async()=>{
+    // Mute immediately before loading so the split-second blip is silent
+    if(player) await player.setVolume(0);
+
+    currentIdx=i;
+    document.getElementById('nowTitle').textContent=t.label+(t.name?' — '+t.name:'');
+    document.getElementById('nowArtist').textContent=t.artist||'';
+    document.getElementById('nowCue').textContent='cue point: '+t.displayStart+(t.startSec?' ('+t.startSec+'s)':'');
+
+    await apiPut('/me/player/play?device_id='+deviceId,{
+      uris:['spotify:track:'+t.id], position_ms:t.startSec*1000
+    });
+
+    // Pause after a short buffer — track is now silently buffered
+    setTimeout(async()=>{
+      await player.pause();
+      // Restore track's saved volume so it's ready to fire at the right level
+      const vol=(t.volume||80)/100;
+      await player.setVolume(vol);
+      syncLiveVolUI(t);
+      setPlayerState('cued');
+      updateProgress(t.startSec*1000, t.durationMs||0);
+    },600);
+
+    renderQueue(); updateControls();
+    armAuto(); hideWarn();
+  };
+
+  if(fadeEnabled && isPlaying){
+    // Fade out the current track, then load the new one
+    fadeInProgress=true;
+    const startVol=currentIdx>=0&&queue[currentIdx]?(queue[currentIdx].volume||80):80;
+    const steps=40;
+    const stepMs=fadeDuration/steps;
+    let step=0;
+    const indicator=document.getElementById('fadingIndicator');
+    indicator.textContent='fading out…';
+
+    fadeInterval=setInterval(async()=>{
+      step++;
+      const ratio=1-(step/steps);
+      const vol=(startVol/100)*ratio;
+      if(player) await player.setVolume(Math.max(0,vol));
+      // Update the live slider to show the fade happening
+      const pct=Math.round(vol*100);
+      const slider=document.getElementById('liveVolSlider');
+      const pctEl=document.getElementById('liveVolPct');
+      if(slider) slider.value=pct;
+      if(pctEl) pctEl.textContent=pct+'%';
+
+      if(step>=steps){
+        clearInterval(fadeInterval);
+        fadeInterval=null;
+        fadeInProgress=false;
+        indicator.textContent='';
+        await doLoad();
+      }
+    },stepMs);
+  } else {
+    await doLoad();
+  }
+}
+
+function onFadeToggleChange(){
+  const on=document.getElementById('fadeToggle').checked;
+  document.getElementById('fadeDurSelect').disabled=!on;
 }
 
 async function playTrack(i){
@@ -662,6 +757,8 @@ async function playTrack(i){
 
 async function handlePlayPause(){
   if(!player)return;
+  // Cancel any in-progress fade
+  if(fadeInterval){clearInterval(fadeInterval);fadeInterval=null;fadeInProgress=false;document.getElementById('fadingIndicator').textContent='';}
   if(playerState==='cued'){
     // Resume from cued position
     await player.resume();

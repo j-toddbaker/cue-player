@@ -215,6 +215,35 @@ input[type=range]{padding:0;height:4px;accent-color:var(--green);cursor:pointer;
 
 /* jump select */
 .jump-wrap{margin-top:2px}
+
+/* ── Per-track volume ── */
+.tvol{font-size:10px;font-family:'DM Mono',monospace;padding:1px 5px;border-radius:3px;border:1px solid;white-space:nowrap}
+.tvol-saved{color:var(--green);border-color:var(--green-mid);background:var(--green-dim)}
+.tvol-default{color:var(--muted);border-color:var(--border);background:transparent}
+
+.edit-vol-row{display:flex;align-items:center;gap:8px;padding:6px 0 2px;border-top:1px solid var(--border);margin-top:4px}
+.edit-vol-row label{margin:0;white-space:nowrap}
+.edit-vol-slider{flex:1}
+.edit-vol-slider.unsaved{accent-color:var(--danger)}
+.edit-vol-slider.saved{accent-color:var(--green)}
+.edit-vol-val{font-size:11px;font-family:'DM Mono',monospace;min-width:32px;text-align:right}
+.edit-vol-val.unsaved{color:var(--danger)}
+.edit-vol-val.saved{color:var(--green)}
+
+.live-vol-wrap{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:8px 10px;margin-bottom:10px}
+.live-vol-hdr{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between}
+.live-vol-track{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted2);margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.live-vol-row{display:flex;align-items:center;gap:8px}
+.live-vol-slider{flex:1}
+.live-vol-slider.unsaved{accent-color:var(--danger)}
+.live-vol-slider.saved{accent-color:var(--green)}
+.live-vol-pct{font-size:11px;font-family:'DM Mono',monospace;min-width:34px;text-align:right}
+.live-vol-pct.unsaved{color:var(--danger)}
+.live-vol-pct.saved{color:var(--green)}
+.save-vol-btn{padding:3px 9px;border-radius:3px;font-size:10px;font-family:'DM Mono',monospace;font-weight:600;cursor:pointer;border:none;white-space:nowrap;transition:all .15s}
+.save-vol-btn.unsaved{background:#3a0000;color:var(--danger);border:1px solid var(--danger)}
+.save-vol-btn.unsaved:hover{background:var(--danger);color:#fff}
+.save-vol-btn.saved{background:var(--green-dim);color:var(--green);border:1px solid var(--green-mid);cursor:default}
 </style>
 </head>
 <body>
@@ -392,11 +421,20 @@ input[type=range]{padding:0;height:4px;accent-color:var(--green);cursor:pointer;
         <button class="ctrl-btn" id="nextBtn" onclick="nextTrack()" disabled title="Next (→)">next →</button>
       </div>
 
-      <!-- Volume -->
-      <div class="vol-row">
-        <span class="vol-label">vol</span>
-        <input type="range" id="volSlider" min="0" max="100" value="80" oninput="setVolume(this.value)" />
-        <span class="vol-label" id="volVal" style="min-width:28px;text-align:right">80%</span>
+      <!-- Live volume -->
+      <div class="live-vol-wrap">
+        <div class="live-vol-hdr">
+          <span>track volume</span>
+          <button class="save-vol-btn unsaved" id="saveVolBtn" onclick="saveCurrentVol()">save to track</button>
+        </div>
+        <div class="live-vol-track" id="liveVolTrack">no track loaded</div>
+        <div class="live-vol-row">
+          <span class="vol-label">0</span>
+          <input type="range" class="live-vol-slider unsaved" id="liveVolSlider" min="0" max="100" value="80"
+            oninput="onLiveVolInput(this.value)" />
+          <span class="vol-label">100</span>
+          <span class="live-vol-pct unsaved" id="liveVolPct">80%</span>
+        </div>
       </div>
 
       <!-- Jump dropdown -->
@@ -592,6 +630,7 @@ async function cueTrack(i){
   await apiPut('/me/player/play?device_id='+deviceId,{
     uris:['spotify:track:'+t.id], position_ms:t.startSec*1000
   });
+  await applyTrackVolume(t);
   // pause after a short buffer so it's pre-loaded
   setTimeout(async()=>{
     await player.pause();
@@ -615,6 +654,7 @@ async function playTrack(i){
   await apiPut('/me/player/play?device_id='+deviceId,{
     uris:['spotify:track:'+t.id], position_ms:t.startSec*1000
   });
+  await applyTrackVolume(t);
   setPlayerState('playing');
   renderQueue(); updateControls();
   armAuto(); hideWarn();
@@ -643,9 +683,61 @@ function prevTrack(){ if(currentIdx>0) playTrack(currentIdx-1); }
 function nextTrack(){ if(currentIdx<queue.length-1) playTrack(currentIdx+1); }
 function jumpTo(val){ if(val!=='') playTrack(parseInt(val)); }
 
-async function setVolume(v){
-  document.getElementById('volVal').textContent=v+'%';
-  if(player) await player.setVolume(v/100);
+/* ── Volume helpers ── */
+async function applyTrackVolume(t){
+  const vol=(t.volume||80)/100;
+  if(player) await player.setVolume(vol);
+  syncLiveVolUI(t);
+}
+
+function syncLiveVolUI(t){
+  const vol=t.volume||80;
+  const slider=document.getElementById('liveVolSlider');
+  const pct=document.getElementById('liveVolPct');
+  const btn=document.getElementById('saveVolBtn');
+  const track=document.getElementById('liveVolTrack');
+  if(slider) slider.value=vol;
+  if(pct){ pct.textContent=vol+'%'; pct.className='live-vol-pct saved'; }
+  if(slider) slider.className='live-vol-slider saved';
+  if(btn){ btn.textContent='saved ✓'; btn.className='save-vol-btn saved'; }
+  if(track) track.textContent=t.label+(t.name?' — '+t.name:'');
+}
+
+function onLiveVolInput(val){
+  const v=parseInt(val);
+  const pct=document.getElementById('liveVolPct');
+  const slider=document.getElementById('liveVolSlider');
+  const btn=document.getElementById('saveVolBtn');
+  if(pct){ pct.textContent=v+'%'; pct.className='live-vol-pct unsaved'; }
+  if(slider) slider.className='live-vol-slider unsaved';
+  if(btn){ btn.textContent='save to track'; btn.className='save-vol-btn unsaved'; }
+  if(player) player.setVolume(v/100);
+}
+
+function saveCurrentVol(){
+  if(currentIdx<0||currentIdx>=queue.length)return;
+  const v=parseInt(document.getElementById('liveVolSlider').value);
+  queue[currentIdx].volume=v;
+  queue[currentIdx].volumeSaved=true;
+  // flip UI to green
+  const pct=document.getElementById('liveVolPct');
+  const slider=document.getElementById('liveVolSlider');
+  const btn=document.getElementById('saveVolBtn');
+  if(pct){ pct.textContent=v+'%'; pct.className='live-vol-pct saved'; }
+  if(slider) slider.className='live-vol-slider saved';
+  if(btn){ btn.textContent='saved ✓'; btn.className='save-vol-btn saved'; }
+  renderQueue(); // refresh badge on card
+}
+
+function onEditVolInput(i, val){
+  const v=parseInt(val);
+  const valEl=document.getElementById('edit-vol-val-'+i);
+  const slider=document.getElementById('edit-vol-'+i);
+  // mark as unsaved (red) since it hasn't been committed via Save yet
+  if(valEl){ valEl.textContent=v+'%'; valEl.className='edit-vol-val unsaved'; }
+  if(slider) slider.className='edit-vol-slider unsaved';
+  // preview volume live while scrubbing
+  if(player) player.setVolume(v/100);
 }
 
 function updateProgress(pos,dur){
@@ -674,7 +766,7 @@ async function addTrack(){
   if(!id){err.textContent='must be a spotify track url (open.spotify.com/track/…)';return;}
   const startSec=parseTime(start);
   const track={url,id,startSec,displayStart:fmtSec(startSec),
-    label:label||'track #'+(queue.length+1),name:'',artist:'',durationMs:0,editing:false};
+    label:label||'track #'+(queue.length+1),name:'',artist:'',durationMs:0,editing:false,volume:80,volumeSaved:true};
   queue.push(track);
   document.getElementById('urlInput').value='';
   document.getElementById('startInput').value='0:00';
@@ -704,6 +796,7 @@ function saveEdit(i){
   const url=document.getElementById('edit-url-'+i).value.trim();
   const start=document.getElementById('edit-start-'+i).value.trim()||'0:00';
   const label=document.getElementById('edit-label-'+i).value.trim();
+  const volEl=document.getElementById('edit-vol-'+i);
   const err=document.getElementById('edit-err-'+i);
   if(url){
     const id=extractId(url);
@@ -718,6 +811,7 @@ function saveEdit(i){
   const startSec=parseTime(start);
   queue[i].startSec=startSec; queue[i].displayStart=fmtSec(startSec);
   if(label) queue[i].label=label;
+  if(volEl){ queue[i].volume=parseInt(volEl.value); queue[i].volumeSaved=true; }
   queue[i].editing=false;
   renderQueue();
 }
@@ -759,6 +853,7 @@ function renderQueue(){
     const isCued=isActive&&playerState==='cued';
     const cardClass='track-card'+(isActive?(isCued?' cued':' active'):'');
     if(t.editing){
+      const vol=t.volume||80;
       return `<div class="${cardClass}" data-idx="${i}">
         <div class="card-main">
           <span class="tnum">${i+1}</span>
@@ -779,6 +874,12 @@ function renderQueue(){
               <input type="text" id="edit-label-${i}" value="${t.label}" />
             </div>
           </div>
+          <div class="edit-vol-row">
+            <label>Volume</label>
+            <input type="range" class="edit-vol-slider saved" id="edit-vol-${i}" min="0" max="100" value="${vol}"
+              oninput="onEditVolInput(${i},this.value)" />
+            <span class="edit-vol-val saved" id="edit-vol-val-${i}">${vol}%</span>
+          </div>
           <div class="err" id="edit-err-${i}"></div>
           <div class="edit-actions">
             <button class="micro-btn mb-ghost" onclick="cancelEdit(${i})">cancel</button>
@@ -788,6 +889,11 @@ function renderQueue(){
       </div>`;
     }
     const dur=t.durationMs?'/ '+fmtMs(t.durationMs):'';
+    const vol=t.volume||80;
+    const volSaved=t.volumeSaved!==false;
+    const volBadge=vol!==80||volSaved===false
+      ? `<span class="tvol ${volSaved?'tvol-saved':'tvol-default'}">vol ${vol}%</span>`
+      : '';
     return `<div class="${cardClass}" data-idx="${i}"
         draggable="${rm}"
         ondragstart="onDragStart(event,${i})"
@@ -807,6 +913,7 @@ function renderQueue(){
           <div class="tmeta">
             <span class="tcue">@ ${t.displayStart}</span>
             ${dur?`<span class="tdur">${dur}</span>`:''}
+            ${volBadge}
           </div>
         </div>
         <div class="tactions">
@@ -882,6 +989,8 @@ function cancelOverwrite(){ document.getElementById('plConfirm').style.display='
 function loadPlaylist(i){
   const pls=getPls(); const pl=pls[i]; if(!pl)return;
   queue=JSON.parse(JSON.stringify(pl.tracks));
+  // ensure legacy tracks without volume get defaults
+  queue.forEach(t=>{ if(t.volume===undefined){t.volume=80;t.volumeSaved=true;} });
   currentIdx=queue.length>0?0:-1;
   renderQueue(); updateControls(); showToast('"'+pl.name+'" loaded ✓');
 }

@@ -197,6 +197,8 @@ select option{background:var(--card)}
 .ctrl-btn.play-btn:hover:not(:disabled){background:#1ed760}
 .ctrl-btn.cue-btn{border-color:var(--amber);color:var(--amber)}
 .ctrl-btn.cue-btn:hover:not(:disabled){background:#2a2000}
+.ctrl-btn.cue-next-btn{border-color:var(--amber);color:var(--amber)}
+.ctrl-btn.cue-next-btn:hover:not(:disabled){background:#2a2000}
 
 .vol-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .vol-label{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);white-space:nowrap}
@@ -430,10 +432,11 @@ input[type=range]{padding:0;height:4px;accent-color:var(--green);cursor:pointer;
 
       <!-- Controls: prev / cue / play-pause / next -->
       <div class="ctrl-row">
-        <button class="ctrl-btn" id="prevBtn" onclick="prevTrack()" disabled title="Previous (←)">← prev</button>
-        <button class="ctrl-btn cue-btn" id="cueBtn" onclick="cueSelected()" disabled title="Cue without playing (C)">⏸ cue</button>
+        <button class="ctrl-btn" id="prevBtn" onclick="prevTrack()" disabled title="Previous — plays immediately (←)">← prev</button>
+        <button class="ctrl-btn cue-btn" id="cueBtn" onclick="cueSelected()" disabled title="Cue selected without playing (C)">⏸ cue</button>
         <button class="ctrl-btn play-btn" id="playPauseBtn" onclick="handlePlayPause()" disabled title="Play / Pause (Space)">▶ play</button>
-        <button class="ctrl-btn" id="nextBtn" onclick="nextTrack()" disabled title="Next (→)">next →</button>
+        <button class="ctrl-btn cue-next-btn" id="cueNextBtn" onclick="cueNext()" disabled title="Cue next track without playing (→)">⏭ cue next</button>
+        <button class="ctrl-btn" id="nextBtn" onclick="nextTrack()" disabled title="Next — plays immediately">next →</button>
       </div>
 
       <!-- Live volume -->
@@ -490,9 +493,9 @@ input[type=range]{padding:0;height:4px;accent-color:var(--green);cursor:pointer;
         </div>
         <div class="kb-body" id="kbBody">
           <div class="kb-row"><span class="kb-key">Space</span><span class="kb-desc">play / pause</span></div>
-          <div class="kb-row"><span class="kb-key">C</span><span class="kb-desc">cue selected (pre-load)</span></div>
-          <div class="kb-row"><span class="kb-key">→</span><span class="kb-desc">next track</span></div>
-          <div class="kb-row"><span class="kb-key">←</span><span class="kb-desc">previous track</span></div>
+          <div class="kb-row"><span class="kb-key">C</span><span class="kb-desc">cue selected (pre-load, no play)</span></div>
+          <div class="kb-row"><span class="kb-key">→</span><span class="kb-desc">cue next (pre-load next, no play)</span></div>
+          <div class="kb-row"><span class="kb-key">←</span><span class="kb-desc">previous track (plays immediately)</span></div>
         </div>
       </div>
 
@@ -778,6 +781,7 @@ function cueSelected(){
 }
 function prevTrack(){ if(currentIdx>0) playTrack(currentIdx-1); }
 function nextTrack(){ if(currentIdx<queue.length-1) playTrack(currentIdx+1); }
+function cueNext(){ if(currentIdx<queue.length-1) cueTrack(currentIdx+1); }
 function jumpTo(val){ if(val!=='') playTrack(parseInt(val)); }
 
 /* ── Volume helpers ── */
@@ -1282,7 +1286,7 @@ document.addEventListener('keydown',e=>{
   if(e.key===' '||e.code==='Space'){
     e.preventDefault(); handlePlayPause();
   } else if(e.key==='ArrowRight'){
-    e.preventDefault(); nextTrack();
+    e.preventDefault(); cueNext();
   } else if(e.key==='ArrowLeft'){
     e.preventDefault(); prevTrack();
   } else if(e.key.toLowerCase()==='c'&&!e.metaKey&&!e.ctrlKey){
@@ -1303,6 +1307,7 @@ function updateControls(){
   const has=queue.length>0&&!!deviceId;
   document.getElementById('playPauseBtn').disabled=!deviceId;
   document.getElementById('cueBtn').disabled=!has;
+  document.getElementById('cueNextBtn').disabled=currentIdx>=queue.length-1||!deviceId;
   document.getElementById('prevBtn').disabled=currentIdx<=0||!deviceId;
   document.getElementById('nextBtn').disabled=currentIdx>=queue.length-1||!deviceId;
 }

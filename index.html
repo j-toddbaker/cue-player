@@ -261,6 +261,15 @@ input[type=range]{padding:0;height:4px;accent-color:var(--green);cursor:pointer;
 .toggle-thumb{position:absolute;top:3px;left:3px;width:14px;height:14px;background:#fff;border-radius:50%;transition:transform .2s;pointer-events:none}
 .toggle-switch input:checked~.toggle-thumb{transform:translateX(16px)}
 .fading-indicator{font-size:10px;font-family:'DM Mono',monospace;color:var(--amber);margin-top:4px;min-height:14px;text-align:center}
+
+/* ── Fade start timestamp ── */
+.fade-start-row{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--card);border:1px solid var(--border);border-radius:6px;margin-top:6px}
+.fade-start-row label{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;white-space:nowrap;flex-shrink:0}
+.fade-start-input{background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:3px 8px;font-size:11px;font-family:'DM Mono',monospace;outline:none;width:68px;text-align:center;transition:border-color .2s}
+.fade-start-input:focus{border-color:var(--green)}
+.fade-start-input:disabled{opacity:.35}
+.fade-start-input.has-value{border-color:var(--green);color:var(--green)}
+.fade-start-hint{font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);flex:1;text-align:right;line-height:1.4}
 </style>
 </head>
 <body>
@@ -477,7 +486,15 @@ input[type=range]{padding:0;height:4px;accent-color:var(--green);cursor:pointer;
       </div>
       <div class="fading-indicator" id="fadingIndicator"></div>
 
-      <!-- Jump dropdown -->
+      <!-- Fade start timestamp -->
+      <div class="fade-start-row" id="fadeStartRow">
+        <label>Auto-fade at</label>
+        <input type="text" class="fade-start-input" id="fadeStartInput"
+          placeholder="mm:ss"
+          oninput="onFadeStartInput(this.value)"
+          title="Leave empty to fade when Cue is pressed. Set a timestamp (e.g. 3:20) to auto-fade when the track reaches that position." />
+        <span class="fade-start-hint">empty = fade on cue press<br>mm:ss = auto-fade at that position</span>
+      </div>
       <div class="jump-wrap">
         <div class="sec-hdr" style="margin-top:0"><span>Jump to track</span></div>
         <select id="jumpSel" onchange="jumpTo(this.value)">
@@ -533,6 +550,7 @@ let pendingOverwriteName = null;
 let toastTimer   = null;
 let fadeInProgress = false;
 let fadeInterval = null;
+let pendingCueIdx = null; // tracks which track is queued for auto-fade
 
 /* ═══════════════════════════════════════════
    PKCE AUTH
@@ -624,10 +642,16 @@ async function initPlayer(){
     }
     currentDurationMs=state.duration;
     updateProgress(state.position,state.duration);
+    // Check auto-fade trigger on every state update
+    if(!state.paused) checkAutoFade(state.position);
     if(progressInterval)clearInterval(progressInterval);
     if(!state.paused){
       let pos=state.position;
-      progressInterval=setInterval(()=>{pos+=500;updateProgress(pos,state.duration);},500);
+      progressInterval=setInterval(()=>{
+        pos+=500;
+        updateProgress(pos,state.duration);
+        checkAutoFade(pos);
+      },500);
     }
     if(state.track_window?.current_track){
       const tr=state.track_window.current_track;
@@ -738,6 +762,62 @@ async function cueTrack(i){
 function onFadeToggleChange(){
   const on=document.getElementById('fadeToggle').checked;
   document.getElementById('fadeDurSelect').disabled=!on;
+  document.getElementById('fadeStartInput').disabled=!on;
+  if(!on) clearFadeStartWatcher();
+}
+
+function onFadeStartInput(val){
+  const input=document.getElementById('fadeStartInput');
+  const trimmed=val.trim();
+  // Visual feedback — green border when a valid time is entered
+  if(trimmed && parseTime(trimmed)>0){
+    input.classList.add('has-value');
+  } else {
+    input.classList.remove('has-value');
+  }
+  // Reset watcher — it will re-arm on next player_state_changed tick
+  clearFadeStartWatcher();
+}
+
+// ── Auto-fade position watcher ──────────────────────────
+let fadeStartWatcherActive=false;
+
+function getFadeStartSec(){
+  const val=document.getElementById('fadeStartInput').value.trim();
+  if(!val) return null;
+  const sec=parseTime(val);
+  return sec>0?sec:null;
+}
+
+function armFadeStartWatcher(){
+  fadeStartWatcherActive=true;
+}
+
+function clearFadeStartWatcher(){
+  fadeStartWatcherActive=false;
+}
+
+// Called from player_state_changed — checks if we should auto-trigger fade
+function checkAutoFade(positionMs){
+  if(!fadeStartWatcherActive) return;
+  if(!document.getElementById('fadeToggle').checked) return;
+  if(playerState!=='playing') return;
+  if(fadeInProgress) return;
+
+  const fadeStartSec=getFadeStartSec();
+  if(fadeStartSec===null) return;
+
+  const positionSec=positionMs/1000;
+  // Trigger when position crosses the fade start point (within a 1s window to avoid missing it)
+  if(positionSec>=fadeStartSec && positionSec<fadeStartSec+1.5){
+    clearFadeStartWatcher(); // disarm so it only fires once
+    // Find the next track to cue — currentIdx+1, or the queued-next if cueNext was pressed
+    const nextIdx=pendingCueIdx!==null?pendingCueIdx:currentIdx+1;
+    if(nextIdx<queue.length){
+      document.getElementById('fadingIndicator').textContent='auto-fading at '+fmtSec(fadeStartSec)+'…';
+      cueTrack(nextIdx);
+    }
+  }
 }
 
 async function playTrack(i){
@@ -754,6 +834,9 @@ async function playTrack(i){
   });
   await applyTrackVolume(t);
   setPlayerState('playing');
+  pendingCueIdx=null; // reset — user can set a new auto-fade target
+  // Arm the auto-fade watcher if a timestamp is set
+  if(getFadeStartSec()!==null) armFadeStartWatcher();
   renderQueue(); updateControls();
   armAuto(); hideWarn();
 }
@@ -781,7 +864,12 @@ function cueSelected(){
 }
 function prevTrack(){ if(currentIdx>0) playTrack(currentIdx-1); }
 function nextTrack(){ if(currentIdx<queue.length-1) playTrack(currentIdx+1); }
-function cueNext(){ if(currentIdx<queue.length-1) cueTrack(currentIdx+1); }
+function cueNext(){
+  if(currentIdx<queue.length-1){
+    pendingCueIdx=currentIdx+1; // store for auto-fade watcher
+    cueTrack(currentIdx+1);
+  }
+}
 function jumpTo(val){ if(val!=='') playTrack(parseInt(val)); }
 
 /* ── Volume helpers ── */
@@ -1345,8 +1433,10 @@ function show(id){
 function logout(){
   sessionStorage.clear(); if(player){player.disconnect();player=null;}
   if(progressInterval)clearInterval(progressInterval);
+  if(fadeInterval){clearInterval(fadeInterval);fadeInterval=null;}
   queue=[];currentIdx=-1;accessToken=null;deviceId=null;
   playerState='idle';reorderMode=false;hotkeyMode='auto';autoArmed=false;
+  fadeInProgress=false;pendingCueIdx=null;clearFadeStartWatcher();
   show('splashScreen');
 }
 

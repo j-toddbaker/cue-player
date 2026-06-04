@@ -119,12 +119,13 @@ select option{background:var(--card)}
 .tmeta{display:flex;align-items:center;gap:8px}
 .tcue{font-size:10px;color:var(--green);font-family:'DM Mono',monospace}
 .tdur{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace}
+.tfade{font-size:10px;color:var(--amber);font-family:'DM Mono',monospace}
 .tactions{display:flex;gap:4px;flex-shrink:0;align-items:center}
 
 /* inline edit form */
 .card-edit{padding:10px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:6px}
 .card-edit input{font-size:11px;padding:5px 8px}
-.edit-row{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.edit-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
 .edit-actions{display:flex;gap:6px;justify-content:flex-end}
 
 .empty-q{text-align:center;padding:2rem;color:var(--muted);font-size:11px;font-family:'DM Mono',monospace;line-height:1.7}
@@ -261,15 +262,6 @@ input[type=range]{padding:0;height:4px;accent-color:var(--green);cursor:pointer;
 .toggle-thumb{position:absolute;top:3px;left:3px;width:14px;height:14px;background:#fff;border-radius:50%;transition:transform .2s;pointer-events:none}
 .toggle-switch input:checked~.toggle-thumb{transform:translateX(16px)}
 .fading-indicator{font-size:10px;font-family:'DM Mono',monospace;color:var(--amber);margin-top:4px;min-height:14px;text-align:center}
-
-/* ── Fade start timestamp ── */
-.fade-start-row{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--card);border:1px solid var(--border);border-radius:6px;margin-top:6px}
-.fade-start-row label{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;white-space:nowrap;flex-shrink:0}
-.fade-start-input{background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:3px 8px;font-size:11px;font-family:'DM Mono',monospace;outline:none;width:68px;text-align:center;transition:border-color .2s}
-.fade-start-input:focus{border-color:var(--green)}
-.fade-start-input:disabled{opacity:.35}
-.fade-start-input.has-value{border-color:var(--green);color:var(--green)}
-.fade-start-hint{font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);flex:1;text-align:right;line-height:1.4}
 </style>
 </head>
 <body>
@@ -486,15 +478,6 @@ input[type=range]{padding:0;height:4px;accent-color:var(--green);cursor:pointer;
       </div>
       <div class="fading-indicator" id="fadingIndicator"></div>
 
-      <!-- Fade start timestamp -->
-      <div class="fade-start-row" id="fadeStartRow">
-        <label>Auto-fade at</label>
-        <input type="text" class="fade-start-input" id="fadeStartInput"
-          placeholder="mm:ss"
-          oninput="onFadeStartInput(this.value)"
-          title="Leave empty to fade when Cue is pressed. Set a timestamp (e.g. 3:20) to auto-fade when the track reaches that position." />
-        <span class="fade-start-hint">empty = fade on cue press<br>mm:ss = auto-fade at that position</span>
-      </div>
       <div class="jump-wrap">
         <div class="sec-hdr" style="margin-top:0"><span>Jump to track</span></div>
         <select id="jumpSel" onchange="jumpTo(this.value)">
@@ -550,7 +533,6 @@ let pendingOverwriteName = null;
 let toastTimer   = null;
 let fadeInProgress = false;
 let fadeInterval = null;
-let pendingCueIdx = null; // tracks which track is queued for auto-fade
 
 /* ═══════════════════════════════════════════
    PKCE AUTH
@@ -762,59 +744,40 @@ async function cueTrack(i){
 function onFadeToggleChange(){
   const on=document.getElementById('fadeToggle').checked;
   document.getElementById('fadeDurSelect').disabled=!on;
-  document.getElementById('fadeStartInput').disabled=!on;
-  if(!on) clearFadeStartWatcher();
 }
 
-function onFadeStartInput(val){
-  const input=document.getElementById('fadeStartInput');
-  const trimmed=val.trim();
-  // Visual feedback — green border when a valid time is entered
-  if(trimmed && parseTime(trimmed)>0){
-    input.classList.add('has-value');
-  } else {
-    input.classList.remove('has-value');
-  }
-  // Reset watcher — it will re-arm on next player_state_changed tick
-  clearFadeStartWatcher();
-}
-
-// ── Auto-fade position watcher ──────────────────────────
+// ── Per-track auto-fade watcher ──────────────────────────
 let fadeStartWatcherActive=false;
 
-function getFadeStartSec(){
-  const val=document.getElementById('fadeStartInput').value.trim();
-  if(!val) return null;
-  const sec=parseTime(val);
-  return sec>0?sec:null;
-}
-
 function armFadeStartWatcher(){
-  fadeStartWatcherActive=true;
+  // Only arm if the current track has a fadeOutSec set
+  if(currentIdx>=0 && queue[currentIdx] && queue[currentIdx].fadeOutSec>0){
+    fadeStartWatcherActive=true;
+  }
 }
 
 function clearFadeStartWatcher(){
   fadeStartWatcherActive=false;
 }
 
-// Called from player_state_changed — checks if we should auto-trigger fade
+// Called from player_state_changed interval — checks if we should auto-trigger fade
 function checkAutoFade(positionMs){
   if(!fadeStartWatcherActive) return;
   if(!document.getElementById('fadeToggle').checked) return;
   if(playerState!=='playing') return;
   if(fadeInProgress) return;
+  if(currentIdx<0||currentIdx>=queue.length) return;
 
-  const fadeStartSec=getFadeStartSec();
-  if(fadeStartSec===null) return;
+  const t=queue[currentIdx];
+  if(!t||!t.fadeOutSec||t.fadeOutSec<=0) return;
 
   const positionSec=positionMs/1000;
-  // Trigger when position crosses the fade start point (within a 1s window to avoid missing it)
-  if(positionSec>=fadeStartSec && positionSec<fadeStartSec+1.5){
-    clearFadeStartWatcher(); // disarm so it only fires once
-    // Find the next track to cue — currentIdx+1, or the queued-next if cueNext was pressed
-    const nextIdx=pendingCueIdx!==null?pendingCueIdx:currentIdx+1;
+  // Trigger when position crosses the fade-out point (1.5s window to avoid missing it)
+  if(positionSec>=t.fadeOutSec && positionSec<t.fadeOutSec+1.5){
+    clearFadeStartWatcher(); // disarm — only fires once per playthrough
+    const nextIdx=currentIdx+1;
     if(nextIdx<queue.length){
-      document.getElementById('fadingIndicator').textContent='auto-fading at '+fmtSec(fadeStartSec)+'…';
+      document.getElementById('fadingIndicator').textContent='auto-fading at '+t.displayFadeOut+'…';
       cueTrack(nextIdx);
     }
   }
@@ -834,9 +797,9 @@ async function playTrack(i){
   });
   await applyTrackVolume(t);
   setPlayerState('playing');
-  pendingCueIdx=null; // reset — user can set a new auto-fade target
-  // Arm the auto-fade watcher if a timestamp is set
-  if(getFadeStartSec()!==null) armFadeStartWatcher();
+  // Arm the per-track auto-fade watcher if this track has a fadeOutSec
+  clearFadeStartWatcher();
+  if(t.fadeOutSec>0) armFadeStartWatcher();
   renderQueue(); updateControls();
   armAuto(); hideWarn();
 }
@@ -864,12 +827,7 @@ function cueSelected(){
 }
 function prevTrack(){ if(currentIdx>0) playTrack(currentIdx-1); }
 function nextTrack(){ if(currentIdx<queue.length-1) playTrack(currentIdx+1); }
-function cueNext(){
-  if(currentIdx<queue.length-1){
-    pendingCueIdx=currentIdx+1; // store for auto-fade watcher
-    cueTrack(currentIdx+1);
-  }
-}
+function cueNext(){ if(currentIdx<queue.length-1) cueTrack(currentIdx+1); }
 function jumpTo(val){ if(val!=='') playTrack(parseInt(val)); }
 
 /* ── Volume helpers ── */
@@ -955,6 +913,7 @@ async function addTrack(){
   if(!id){err.textContent='must be a spotify track url (open.spotify.com/track/…)';return;}
   const startSec=parseTime(start);
   const track={url,id,startSec,displayStart:fmtSec(startSec),
+    fadeOutSec:0,displayFadeOut:'',
     label:label||'track #'+(queue.length+1),name:'',artist:'',durationMs:0,editing:false,volume:80,volumeSaved:true};
   queue.push(track);
   document.getElementById('urlInput').value='';
@@ -1001,6 +960,26 @@ function saveEdit(i){
   queue[i].startSec=startSec; queue[i].displayStart=fmtSec(startSec);
   if(label) queue[i].label=label;
   if(volEl){ queue[i].volume=parseInt(volEl.value); queue[i].volumeSaved=true; }
+  // Fade-out timestamp
+  const fadeEl=document.getElementById('edit-fade-'+i);
+  const fadeErr=document.getElementById('edit-err-'+i);
+  if(fadeEl){
+    const fadeVal=fadeEl.value.trim();
+    if(fadeVal){
+      const fadeSec=parseTime(fadeVal);
+      // Validate: must be after start time
+      if(fadeSec>0 && fadeSec<=startSec){
+        fadeErr.textContent='fade-out must be after the start time ('+fmtSec(startSec)+')'; return;
+      }
+      // Validate: must be before end of track (if duration known)
+      if(queue[i].durationMs>0 && fadeSec*1000>queue[i].durationMs){
+        fadeErr.textContent='fade-out is past the end of the track ('+fmtMs(queue[i].durationMs)+')'; return;
+      }
+      queue[i].fadeOutSec=fadeSec; queue[i].displayFadeOut=fmtSec(fadeSec);
+    } else {
+      queue[i].fadeOutSec=0; queue[i].displayFadeOut='';
+    }
+  }
   queue[i].editing=false;
   renderQueue();
 }
@@ -1059,6 +1038,10 @@ function renderQueue(){
               <input type="text" id="edit-start-${i}" value="${t.displayStart}" />
             </div>
             <div class="field" style="margin:0">
+              <label>Fade-out at</label>
+              <input type="text" id="edit-fade-${i}" value="${t.displayFadeOut||''}" placeholder="mm:ss or blank" title="Auto-fade to next track at this position. Leave blank to fade only when Cue Next is pressed." />
+            </div>
+            <div class="field" style="margin:0">
               <label>Label</label>
               <input type="text" id="edit-label-${i}" value="${t.label}" />
             </div>
@@ -1083,6 +1066,9 @@ function renderQueue(){
     const volBadge=vol!==80||volSaved===false
       ? `<span class="tvol ${volSaved?'tvol-saved':'tvol-default'}">vol ${vol}%</span>`
       : '';
+    const fadeBadge=t.fadeOutSec>0
+      ? `<span class="tfade">↘ ${t.displayFadeOut}</span>`
+      : '';
     return `<div class="${cardClass}" data-idx="${i}"
         draggable="${rm}"
         ondragstart="onDragStart(event,${i})"
@@ -1102,6 +1088,7 @@ function renderQueue(){
           <div class="tmeta">
             <span class="tcue">@ ${t.displayStart}</span>
             ${dur?`<span class="tdur">${dur}</span>`:''}
+            ${fadeBadge}
             ${volBadge}
           </div>
         </div>
@@ -1178,8 +1165,11 @@ function cancelOverwrite(){ document.getElementById('plConfirm').style.display='
 function loadPlaylist(i){
   const pls=getPls(); const pl=pls[i]; if(!pl)return;
   queue=JSON.parse(JSON.stringify(pl.tracks));
-  // ensure legacy tracks without volume get defaults
-  queue.forEach(t=>{ if(t.volume===undefined){t.volume=80;t.volumeSaved=true;} });
+  // ensure legacy tracks without fadeOutSec get defaults
+  queue.forEach(t=>{
+    if(t.volume===undefined){t.volume=80;t.volumeSaved=true;}
+    if(t.fadeOutSec===undefined){t.fadeOutSec=0;t.displayFadeOut='';}
+  });
   currentIdx=queue.length>0?0:-1;
   renderQueue(); updateControls(); showToast('"'+pl.name+'" loaded ✓');
 }
@@ -1436,7 +1426,7 @@ function logout(){
   if(fadeInterval){clearInterval(fadeInterval);fadeInterval=null;}
   queue=[];currentIdx=-1;accessToken=null;deviceId=null;
   playerState='idle';reorderMode=false;hotkeyMode='auto';autoArmed=false;
-  fadeInProgress=false;pendingCueIdx=null;clearFadeStartWatcher();
+  fadeInProgress=false; clearFadeStartWatcher();
   show('splashScreen');
 }
 

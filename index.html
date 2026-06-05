@@ -66,7 +66,7 @@ input[type=text],select{width:100%;background:var(--card);border:1px solid var(-
 input[type=text]:focus,select:focus{border-color:var(--green)}
 select option{background:var(--card)}
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px}
-.three-col{display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;margin-bottom:6px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:6px}
 .field{margin-bottom:7px}
 .add-btn{background:var(--green);color:#000;border:none;border-radius:6px;padding:8px 14px;width:100%;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s}
 .add-btn:hover{background:#1ed760}
@@ -325,10 +325,14 @@ input[type=range]{padding:0;height:4px;accent-color:var(--green);cursor:pointer;
         <label>Spotify Track URL</label>
         <input type="text" id="urlInput" placeholder="https://open.spotify.com/track/…" />
       </div>
-      <div class="two-col">
+      <div class="three-col">
         <div class="field">
           <label>Start time (mm:ss)</label>
           <input type="text" id="startInput" placeholder="0:00" value="0:00" />
+        </div>
+        <div class="field">
+          <label>Fade out at (mm:ss)</label>
+          <input type="text" id="fadeOutInput" placeholder="blank = manual" title="Auto-fade to next track at this position. Leave blank to fade only on Cue Next." />
         </div>
         <div class="field">
           <label>Label (optional)</label>
@@ -700,6 +704,9 @@ async function cueTrack(i){
       syncLiveVolUI(t);
       setPlayerState('cued');
       updateProgress(t.startSec*1000, t.durationMs||0);
+      // Pre-arm the fade watcher so it fires when Play is pressed from cued state
+      clearFadeStartWatcher();
+      if(t.fadeOutSec>0) armFadeStartWatcher();
     },600);
 
     renderQueue(); updateControls();
@@ -809,13 +816,23 @@ async function handlePlayPause(){
   // Cancel any in-progress fade
   if(fadeInterval){clearInterval(fadeInterval);fadeInterval=null;fadeInProgress=false;document.getElementById('fadingIndicator').textContent='';}
   if(playerState==='cued'){
-    // Resume from cued position
+    // Resume from cued position — arm watcher now that we're about to play
     await player.resume();
     setPlayerState('playing');
+    // Arm the fade watcher — it was pre-armed in cueTrack but confirm here
+    // in case the track has a fadeOutSec and we're resuming from cued state
+    clearFadeStartWatcher();
+    if(currentIdx>=0 && currentIdx<queue.length && queue[currentIdx].fadeOutSec>0){
+      armFadeStartWatcher();
+    }
   } else if(playerState==='playing'){
     await player.togglePlay();
   } else if(playerState==='paused'){
+    // Resuming from mid-track pause — re-arm watcher too
     await player.togglePlay();
+    if(currentIdx>=0 && currentIdx<queue.length && queue[currentIdx].fadeOutSec>0){
+      armFadeStartWatcher();
+    }
   } else {
     // Nothing loaded — play from cue point
     if(currentIdx>=0 && currentIdx<queue.length) await playTrack(currentIdx);
@@ -905,6 +922,7 @@ function seekFromBar(e){
 async function addTrack(){
   const url=document.getElementById('urlInput').value.trim();
   const start=document.getElementById('startInput').value.trim()||'0:00';
+  const fadeOutRaw=document.getElementById('fadeOutInput').value.trim();
   const label=document.getElementById('labelInput').value.trim();
   const err=document.getElementById('errMsg');
   err.textContent='';
@@ -912,12 +930,22 @@ async function addTrack(){
   const id=extractId(url);
   if(!id){err.textContent='must be a spotify track url (open.spotify.com/track/…)';return;}
   const startSec=parseTime(start);
+  let fadeOutSec=0, displayFadeOut='';
+  if(fadeOutRaw){
+    fadeOutSec=parseTime(fadeOutRaw);
+    if(fadeOutSec>0 && fadeOutSec<=startSec){
+      err.textContent='fade-out must be after the start time ('+fmtSec(startSec)+')'; return;
+    }
+    displayFadeOut=fadeOutSec>0?fmtSec(fadeOutSec):'';
+    if(fadeOutSec===0) fadeOutSec=0; // blank/invalid treated as none
+  }
   const track={url,id,startSec,displayStart:fmtSec(startSec),
-    fadeOutSec:0,displayFadeOut:'',
+    fadeOutSec,displayFadeOut,
     label:label||'track #'+(queue.length+1),name:'',artist:'',durationMs:0,editing:false,volume:80,volumeSaved:true};
   queue.push(track);
   document.getElementById('urlInput').value='';
   document.getElementById('startInput').value='0:00';
+  document.getElementById('fadeOutInput').value='';
   document.getElementById('labelInput').value='';
   if(currentIdx===-1)currentIdx=0;
   renderQueue(); updateControls();

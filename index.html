@@ -262,6 +262,22 @@ input[type=range]{padding:0;height:4px;accent-color:var(--green);cursor:pointer;
 .toggle-thumb{position:absolute;top:3px;left:3px;width:14px;height:14px;background:#fff;border-radius:50%;transition:transform .2s;pointer-events:none}
 .toggle-switch input:checked~.toggle-thumb{transform:translateX(16px)}
 .fading-indicator{font-size:10px;font-family:'DM Mono',monospace;color:var(--amber);margin-top:4px;min-height:14px;text-align:center}
+
+/* ── Performance clocks ── */
+.clocks-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.clock-box{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 12px;text-align:center;transition:border-color .2s}
+.clock-box.clock-active-cue{border-color:var(--amber)}
+.clock-box.clock-active-prog{border-color:var(--green)}
+.clock-label{font-size:9px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between}
+.clock-label-cue{color:var(--amber)}
+.clock-label-prog{color:var(--green)}
+.clock-time{font-size:38px;font-weight:700;font-family:'DM Mono',monospace;line-height:1;letter-spacing:.02em}
+.clock-time-cue{color:var(--amber)}
+.clock-time-prog{color:var(--green)}
+.clock-time.clock-dim{opacity:.35}
+.clock-reset{background:none;border:none;cursor:pointer;font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);text-decoration:underline;text-underline-offset:2px;padding:0}
+.clock-reset:hover{color:var(--text)}
+.clock-sub{font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);margin-top:3px}
 </style>
 </head>
 <body>
@@ -412,6 +428,24 @@ input[type=range]{padding:0;height:4px;accent-color:var(--green);cursor:pointer;
         <span id="statusText">initializing player…</span>
       </div>
 
+      <!-- Performance Clocks -->
+      <div class="clocks-row">
+        <div class="clock-box" id="cueClockBox">
+          <div class="clock-label clock-label-cue">
+            <span>⏸ Cue</span>
+            <span class="clock-sub" id="cueClockSub">resets on play</span>
+          </div>
+          <div class="clock-time clock-time-cue clock-dim" id="cueClock">0:00</div>
+        </div>
+        <div class="clock-box" id="progClockBox">
+          <div class="clock-label clock-label-prog">
+            <span>▶ Program</span>
+            <button class="clock-reset" onclick="resetProgClock()" title="Reset program clock">reset</button>
+          </div>
+          <div class="clock-time clock-time-prog clock-dim" id="progClock">0:00</div>
+        </div>
+      </div>
+
       <!-- Now Playing display -->
       <div class="now-panel" id="nowPanel" onclick="armAuto()">
         <div class="now-label">
@@ -538,6 +572,12 @@ let toastTimer   = null;
 let fadeInProgress = false;
 let fadeInterval = null;
 
+// ── Clock state ──────────────────────────────────────────
+let cueClockMs    = 0;   // elapsed ms since last cue (resets on play)
+let progClockMs   = 0;   // accumulated program time (resets on manual reset)
+let cueClockTimer = null;
+let progClockTimer = null;
+
 /* ═══════════════════════════════════════════
    PKCE AUTH
 ═══════════════════════════════════════════ */
@@ -663,10 +703,20 @@ function setPlayerState(s){
   badge.className='now-state-badge';
   nowPanel.classList.remove('cued-state');
   fill.classList.remove('amber');
-  if(s==='playing'){badge.classList.add('nsb-playing');badge.textContent='playing';btn.textContent='⏸ pause';}
-  else if(s==='paused'){badge.classList.add('nsb-paused');badge.textContent='paused';btn.textContent='▶ play';}
-  else if(s==='cued'){badge.classList.add('nsb-cued');badge.textContent='cued';btn.textContent='▶ play';nowPanel.classList.add('cued-state');fill.classList.add('amber');}
-  else{badge.classList.add('nsb-idle');badge.textContent='idle';btn.textContent='▶ play';}
+  if(s==='playing'){
+    badge.classList.add('nsb-playing');badge.textContent='playing';btn.textContent='⏸ pause';
+    onClockPlaying();
+  } else if(s==='paused'){
+    badge.classList.add('nsb-paused');badge.textContent='paused';btn.textContent='▶ play';
+    onClockPaused();
+  } else if(s==='cued'){
+    badge.classList.add('nsb-cued');badge.textContent='cued';btn.textContent='▶ play';
+    nowPanel.classList.add('cued-state');fill.classList.add('amber');
+    onClockCued();
+  } else {
+    badge.classList.add('nsb-idle');badge.textContent='idle';btn.textContent='▶ play';
+    onClockIdle();
+  }
 }
 
 async function cueTrack(i){
@@ -1409,6 +1459,103 @@ document.addEventListener('focusin',e=>{
 /* ═══════════════════════════════════════════
    UI HELPERS
 ═══════════════════════════════════════════ */
+/* ─────────────────────────────────────────
+   PERFORMANCE CLOCKS
+───────────────────────────────────────── */
+function fmtClock(ms){
+  const totalSec=Math.floor(ms/1000);
+  const mins=Math.floor(totalSec/60);
+  const secs=totalSec%60;
+  return mins+':'+secs.toString().padStart(2,'0');
+}
+
+function startCueClock(){
+  stopCueClock();
+  cueClockMs=0;
+  renderCueClock();
+  cueClockTimer=setInterval(()=>{
+    cueClockMs+=100;
+    renderCueClock();
+  },100);
+}
+
+function stopCueClock(){
+  if(cueClockTimer){clearInterval(cueClockTimer);cueClockTimer=null;}
+}
+
+function resetCueClock(){
+  stopCueClock();
+  cueClockMs=0;
+  renderCueClock();
+}
+
+function startProgClock(){
+  stopProgClock();
+  progClockTimer=setInterval(()=>{
+    progClockMs+=100;
+    renderProgClock();
+  },100);
+}
+
+function stopProgClock(){
+  if(progClockTimer){clearInterval(progClockTimer);progClockTimer=null;}
+}
+
+function resetProgClock(){
+  stopProgClock();
+  progClockMs=0;
+  renderProgClock();
+}
+
+function renderCueClock(){
+  const el=document.getElementById('cueClock');
+  const box=document.getElementById('cueClockBox');
+  if(!el)return;
+  el.textContent=fmtClock(cueClockMs);
+  const active=cueClockTimer!==null;
+  el.classList.toggle('clock-dim',!active);
+  box.classList.toggle('clock-active-cue',active);
+}
+
+function renderProgClock(){
+  const el=document.getElementById('progClock');
+  const box=document.getElementById('progClockBox');
+  if(!el)return;
+  el.textContent=fmtClock(progClockMs);
+  const active=progClockTimer!==null;
+  el.classList.toggle('clock-dim',!active);
+  box.classList.toggle('clock-active-prog',active);
+}
+
+// Called when a track is cued (pre-loaded, not playing)
+function onClockCued(){
+  startCueClock();  // start/restart cue clock
+  stopProgClock();  // program clock pauses while cued
+  renderProgClock();
+}
+
+// Called when playback starts/resumes
+function onClockPlaying(){
+  resetCueClock();  // cue clock resets to 0:00 and stops
+  startProgClock(); // program clock runs
+}
+
+// Called when playback pauses (mid-track, not cued)
+function onClockPaused(){
+  stopCueClock();
+  stopProgClock();
+  renderCueClock();
+  renderProgClock();
+}
+
+// Called on idle / disconnect
+function onClockIdle(){
+  stopCueClock();
+  stopProgClock();
+  renderCueClock();
+  renderProgClock();
+}
+
 function updateControls(){
   const has=queue.length>0&&!!deviceId;
   document.getElementById('playPauseBtn').disabled=!deviceId;
@@ -1455,6 +1602,7 @@ function logout(){
   queue=[];currentIdx=-1;accessToken=null;deviceId=null;
   playerState='idle';reorderMode=false;hotkeyMode='auto';autoArmed=false;
   fadeInProgress=false; clearFadeStartWatcher();
+  onClockIdle();
   show('splashScreen');
 }
 
@@ -1496,6 +1644,7 @@ async function boot(){
   }
   show('appScreen');
   renderQueue(); renderPlaylists(); updateControls(); updateHotkeyUI();
+  renderCueClock(); renderProgClock();
   document.getElementById('loadingText').textContent='initializing playback…';
   await initPlayer();
 }

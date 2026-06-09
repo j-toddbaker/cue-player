@@ -262,22 +262,6 @@ input[type=range]{padding:0;height:4px;accent-color:var(--green);cursor:pointer;
 .toggle-thumb{position:absolute;top:3px;left:3px;width:14px;height:14px;background:#fff;border-radius:50%;transition:transform .2s;pointer-events:none}
 .toggle-switch input:checked~.toggle-thumb{transform:translateX(16px)}
 .fading-indicator{font-size:10px;font-family:'DM Mono',monospace;color:var(--amber);margin-top:4px;min-height:14px;text-align:center}
-
-/* ── Performance clocks ── */
-.clocks-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
-.clock-box{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 12px;text-align:center;transition:border-color .2s}
-.clock-box.clock-active-cue{border-color:var(--amber)}
-.clock-box.clock-active-prog{border-color:var(--green)}
-.clock-label{font-size:9px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between}
-.clock-label-cue{color:var(--amber)}
-.clock-label-prog{color:var(--green)}
-.clock-time{font-size:38px;font-weight:700;font-family:'DM Mono',monospace;line-height:1;letter-spacing:.02em}
-.clock-time-cue{color:var(--amber)}
-.clock-time-prog{color:var(--green)}
-.clock-time.clock-dim{opacity:.35}
-.clock-reset{background:none;border:none;cursor:pointer;font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);text-decoration:underline;text-underline-offset:2px;padding:0}
-.clock-reset:hover{color:var(--text)}
-.clock-sub{font-size:9px;font-family:'DM Mono',monospace;color:var(--muted);margin-top:3px}
 </style>
 </head>
 <body>
@@ -428,27 +412,6 @@ input[type=range]{padding:0;height:4px;accent-color:var(--green);cursor:pointer;
         <span id="statusText">initializing player…</span>
       </div>
 
-      <!-- Performance Clocks -->
-      <div class="clocks-row">
-        <div class="clock-box" id="cueClockBox">
-          <div class="clock-label clock-label-cue">
-            <span>⏸ Cue</span>
-            <span class="clock-sub">resets on cue &amp; play</span>
-          </div>
-          <div class="clock-time clock-time-cue clock-dim" id="cueClock">0:00</div>
-        </div>
-        <div class="clock-box" id="progClockBox">
-          <div class="clock-label clock-label-prog">
-            <span id="progClockLabel">⏱ Elapsed</span>
-            <div style="display:flex;gap:8px;align-items:center">
-              <button class="clock-reset" id="progModeBtn" onclick="toggleProgMode()" title="Switch to program time (air time only)">elapsed</button>
-              <button class="clock-reset" onclick="resetProgClock()" title="Reset clock">reset</button>
-            </div>
-          </div>
-          <div class="clock-time clock-time-prog clock-dim" id="progClock">0:00</div>
-        </div>
-      </div>
-
       <!-- Now Playing display -->
       <div class="now-panel" id="nowPanel" onclick="armAuto()">
         <div class="now-label">
@@ -575,13 +538,6 @@ let toastTimer   = null;
 let fadeInProgress = false;
 let fadeInterval = null;
 
-// ── Clock state ──────────────────────────────────────────
-let cueClockMs     = 0;   // ms since last cue or play (resets on both)
-let progClockMs    = 0;   // accumulated air time (program mode)
-let elapsedClockMs = 0;   // wall clock from first cue (elapsed mode)
-let cueClockTimer  = null;
-let progClockTimer = null;
-
 /* ═══════════════════════════════════════════
    PKCE AUTH
 ═══════════════════════════════════════════ */
@@ -707,20 +663,10 @@ function setPlayerState(s){
   badge.className='now-state-badge';
   nowPanel.classList.remove('cued-state');
   fill.classList.remove('amber');
-  if(s==='playing'){
-    badge.classList.add('nsb-playing');badge.textContent='playing';btn.textContent='⏸ pause';
-    onClockPlaying();
-  } else if(s==='paused'){
-    badge.classList.add('nsb-paused');badge.textContent='paused';btn.textContent='▶ play';
-    onClockPaused();
-  } else if(s==='cued'){
-    badge.classList.add('nsb-cued');badge.textContent='cued';btn.textContent='▶ play';
-    nowPanel.classList.add('cued-state');fill.classList.add('amber');
-    onClockCued();
-  } else {
-    badge.classList.add('nsb-idle');badge.textContent='idle';btn.textContent='▶ play';
-    onClockIdle();
-  }
+  if(s==='playing'){badge.classList.add('nsb-playing');badge.textContent='playing';btn.textContent='⏸ pause';}
+  else if(s==='paused'){badge.classList.add('nsb-paused');badge.textContent='paused';btn.textContent='▶ play';}
+  else if(s==='cued'){badge.classList.add('nsb-cued');badge.textContent='cued';btn.textContent='▶ play';nowPanel.classList.add('cued-state');fill.classList.add('amber');}
+  else{badge.classList.add('nsb-idle');badge.textContent='idle';btn.textContent='▶ play';}
 }
 
 async function cueTrack(i){
@@ -1463,144 +1409,6 @@ document.addEventListener('focusin',e=>{
 /* ═══════════════════════════════════════════
    UI HELPERS
 ═══════════════════════════════════════════ */
-/* ─────────────────────────────────────────
-   PERFORMANCE CLOCKS
-───────────────────────────────────────── */
-function fmtClock(ms){
-  const totalSec=Math.floor(ms/1000);
-  const mins=Math.floor(totalSec/60);
-  const secs=totalSec%60;
-  return mins+':'+secs.toString().padStart(2,'0');
-}
-
-// ── Cue clock ───────────────────────────
-// Resets and restarts on BOTH cue and play.
-// Counts how long you've been in the current state (cued or playing).
-// Freezes on pause.
-
-function startCueClock(){
-  stopCueClock();
-  cueClockMs=0;
-  renderCueClock();
-  cueClockTimer=setInterval(()=>{
-    cueClockMs+=100;
-    renderCueClock();
-  },100);
-}
-
-function stopCueClock(){
-  if(cueClockTimer){clearInterval(cueClockTimer);cueClockTimer=null;}
-}
-
-function renderCueClock(){
-  const el=document.getElementById('cueClock');
-  const box=document.getElementById('cueClockBox');
-  if(!el)return;
-  el.textContent=fmtClock(cueClockMs);
-  const active=cueClockTimer!==null;
-  el.classList.toggle('clock-dim',!active&&cueClockMs===0);
-  box.classList.toggle('clock-active-cue',active);
-}
-
-// ── Program clock ───────────────────────
-// Two modes toggled by user:
-//   'elapsed' — wall clock from first cue, never pauses
-//   'program' — air time only, pauses when not playing
-let progClockMode='elapsed'; // 'elapsed' | 'program'
-let elapsedStarted=false;    // whether the elapsed clock has been kicked off yet
-
-function toggleProgMode(){
-  progClockMode=progClockMode==='elapsed'?'program':'elapsed';
-  updateProgModeUI();
-  // If switching to elapsed and it hasn't started yet, don't start it
-  // (it starts on first cue/play). If already running, keep going.
-  renderProgClock();
-}
-
-function updateProgModeUI(){
-  const btn=document.getElementById('progModeBtn');
-  if(!btn)return;
-  if(progClockMode==='elapsed'){
-    btn.textContent='elapsed';
-    btn.title='Switch to program time (air time only)';
-    document.getElementById('progClockLabel').textContent='⏱ Elapsed';
-  } else {
-    btn.textContent='program';
-    btn.title='Switch to elapsed time (wall clock from first cue)';
-    document.getElementById('progClockLabel').textContent='▶ Program';
-  }
-}
-
-function startElapsed(){
-  // Elapsed timer runs independently — never pauses
-  if(!elapsedStarted){
-    elapsedStarted=true;
-    setInterval(()=>{
-      elapsedClockMs+=100;
-      if(progClockMode==='elapsed') renderProgClock();
-    },100);
-  }
-}
-
-function startProgClock(){
-  stopProgClock();
-  progClockTimer=setInterval(()=>{
-    progClockMs+=100;
-    if(progClockMode==='program') renderProgClock();
-  },100);
-}
-
-function stopProgClock(){
-  if(progClockTimer){clearInterval(progClockTimer);progClockTimer=null;}
-}
-
-function resetProgClock(){
-  stopProgClock();
-  progClockMs=0;
-  elapsedClockMs=0;
-  elapsedStarted=false;
-  renderProgClock();
-}
-function renderProgClock(){
-  const el=document.getElementById('progClock');
-  const box=document.getElementById('progClockBox');
-  if(!el)return;
-  const ms=progClockMode==='elapsed'?elapsedClockMs:progClockMs;
-  el.textContent=fmtClock(ms);
-  const active=progClockMode==='elapsed'?elapsedStarted:(progClockTimer!==null);
-  el.classList.toggle('clock-dim',!active&&ms===0);
-  box.classList.toggle('clock-active-prog',active);
-}
-
-// ── State change handlers ───────────────
-function onClockCued(){
-  startCueClock();     // reset + start cue clock
-  stopProgClock();     // program air-time pauses while cued
-  startElapsed();      // elapsed starts on first cue if not already running
-  renderProgClock();
-}
-
-function onClockPlaying(){
-  startCueClock();     // reset + restart cue clock (now counting play time)
-  startProgClock();    // program air-time runs
-  startElapsed();      // elapsed keeps running (or starts if first event)
-}
-
-function onClockPaused(){
-  stopCueClock();      // freeze cue clock
-  stopProgClock();     // freeze program air-time
-  renderCueClock();
-  renderProgClock();
-}
-
-function onClockIdle(){
-  stopCueClock();
-  stopProgClock();
-  cueClockMs=0;
-  renderCueClock();
-  renderProgClock();
-}
-
 function updateControls(){
   const has=queue.length>0&&!!deviceId;
   document.getElementById('playPauseBtn').disabled=!deviceId;
@@ -1647,9 +1455,6 @@ function logout(){
   queue=[];currentIdx=-1;accessToken=null;deviceId=null;
   playerState='idle';reorderMode=false;hotkeyMode='auto';autoArmed=false;
   fadeInProgress=false; clearFadeStartWatcher();
-  cueClockMs=0; progClockMs=0; elapsedClockMs=0; elapsedStarted=false;
-  progClockMode='elapsed';
-  onClockIdle();
   show('splashScreen');
 }
 
@@ -1691,7 +1496,6 @@ async function boot(){
   }
   show('appScreen');
   renderQueue(); renderPlaylists(); updateControls(); updateHotkeyUI();
-  renderCueClock(); renderProgClock(); updateProgModeUI();
   document.getElementById('loadingText').textContent='initializing playback…';
   await initPlayer();
 }
